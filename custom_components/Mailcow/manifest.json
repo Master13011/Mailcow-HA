@@ -1,6 +1,6 @@
 {
   "domain": "Mailcow",
-  "name": "Mailcow HA",
+  "name": "Mailcow",
   "documentation": "https://github.com/Master13011/Mailcow-HA/",
   "issue_tracker": "https://github.com/Master13011/Mailcow-HA/issues",
   "dependencies": [],
