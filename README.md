@@ -12,12 +12,12 @@ Cette intégration personnalisée permet de connecter votre serveur Mailcow à H
 
 ## Installation
 
- Ensure that [HACS](https://hacs.xyz) is installed.
+1. Ensure that [HACS](https://hacs.xyz) is installed.
 
-2. Open HACS, then select `Integrations`.
+2. Open HACS,
 
 3. Select ![Capture d'écran 2025-02-20 150308](https://github.com/user-attachments/assets/66eea1bf-9bbb-4cac-af2b-02e6dea34f16).
-
+   
 4. Set `Repository` to *https://github.com/Master13011/Mailcow-HA*  
    and `Category` to _Integration_.
 
