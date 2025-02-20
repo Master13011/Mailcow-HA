@@ -1,6 +1,7 @@
 {
-  "name": "Mailcow",
+  "name": "Mailcow HA",
   "country": "FR",
   "render_readme": true,
+  "domains": ["Mailcow"],
   "homeassistant": "2022.5.0"
 }
