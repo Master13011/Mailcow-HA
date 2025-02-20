@@ -1,5 +1,5 @@
 {
-  "domain": "Mailcow",
+  "domain": "Mailcow_HA",
   "name": "Mailcow HA",
   "documentation": "https://github.com/Master13011/Mailcow-HA/",
   "issue_tracker": "https://github.com/Master13011/Mailcow-HA/issues",
