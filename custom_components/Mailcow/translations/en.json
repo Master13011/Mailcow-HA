@@ -1,0 +1,16 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect to Mailcow",
+        "data": {
+          "base_url": "Mailcow Base URL",
+          "api_key": "API Key"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect, please check your URL and API key"
+    }
+  }
+}
