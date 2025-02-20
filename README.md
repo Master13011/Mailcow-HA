@@ -12,11 +12,28 @@ Cette intégration personnalisée permet de connecter votre serveur Mailcow à H
 
 ## Installation
 
-[Ajoutez ici les instructions d'installation]
+ Ensure that [HACS](https://hacs.xyz) is installed.
+
+2. Open HACS, then select `Integrations`.
+
+3. Select &#8942; and then `Custom repositories`.
+
+4. Set `Repository` to *https://github.com/Master13011/Mailcow-HA*  
+   and `Category` to _Integration_.
+
+5. Install **Mailcow-HA** integration via HACS:
+
+   [![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=mampfes&repository=Mailcow-HA)
+
+   If the button doesn't work: Open `HACS` > `Integrations` > `Explore & Download Repositories` and select integration `Mailcow HA`.
 
 ## Configuration
 
-[Détaillez ici les étapes de configuration, y compris la configuration de l'API Mailcow]
+Depuis vote Interface Admin Mailcow, activer votre API
+![image](https://github.com/user-attachments/assets/8ecac93c-2acd-457d-8170-57b99ddb9257)
+
+Les API sont disponibles ici : https://mail.domainmailcow.com/api/#/
+
 
 ## Utilisation
 
