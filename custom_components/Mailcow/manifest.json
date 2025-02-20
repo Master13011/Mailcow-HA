@@ -1,12 +1,12 @@
 {
-  "domain": "Mailcow_HA",
-  "name": "Mailcow HA",
+  "domain": "mailcow",
+  "name": "HA-Mailcow-Custom",
   "documentation": "https://github.com/Master13011/Mailcow-HA/",
   "issue_tracker": "https://github.com/Master13011/Mailcow-HA/issues",
   "dependencies": [],
   "codeowners": ["@Master13011"],
   "requirements": ["requests"],
   "iot_class": "cloud_polling",
-  "version": "1.0.6",
+  "version": "1.0.1",
   "config_flow": true
 }
