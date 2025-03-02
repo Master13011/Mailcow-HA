@@ -1,12 +1,15 @@
 {
-  "domain": "mailcow_ha_custom",
-  "name": "Mailcow HA",
-  "documentation": "https://github.com/Master13011/Mailcow-HA/",
-  "issue_tracker": "https://github.com/Master13011/Mailcow-HA/issues",
-  "dependencies": [],
-  "codeowners": ["@Master13011"],
-  "requirements": ["requests"],
-  "iot_class": "cloud_polling",
-  "version": "1.0.1",
-  "config_flow": true
+    "domain": "mailcow_ha_custom",
+    "name": "Mailcow HA",
+    "config_flow": true,
+    "documentation": "https://github.com/Master13011/Mailcow-HA",
+    "requirements": ["requests"],
+    "ssdp": [],
+    "zeroconf": [],
+    "homekit": {},
+    "dependencies": [],
+    "version": "1.0.2",
+    "codeowners": ["@Master13011"],
+    "iot_class": "cloud_polling",
+    "issue_tracker": "https://github.com/Master13011/Mailcow-HA/issues"
 }
