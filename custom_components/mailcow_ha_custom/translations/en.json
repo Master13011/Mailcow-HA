@@ -4,7 +4,7 @@
       "user": {
         "title": "Connect to Mailcow",
         "data": {
-          "base_url": "Mailcow Base URL (EX. https://mail.domainmailcow.com/)",
+          "base_url": "Mailcow Base URL",
           "api_key": "API Key"
         }
       }
