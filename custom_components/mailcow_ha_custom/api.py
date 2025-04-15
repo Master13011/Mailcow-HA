@@ -2,7 +2,6 @@
 import logging
 import requests
 import asyncio
-import json
 
 _LOGGER = logging.getLogger(__name__)
 
