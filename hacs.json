@@ -3,4 +3,6 @@
   "country": "FR",
   "render_readme": true,
   "homeassistant": "2022.5.0"
+  "zip_release": true,
+  "filename": "mailcow_ha_custom.zip"
 }
