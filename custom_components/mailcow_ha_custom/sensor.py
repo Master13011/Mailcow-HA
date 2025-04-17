@@ -33,6 +33,7 @@ async def async_setup_entry(
         MailcowVersionSensor(api, base_url),
         MailcowVmailStatusSensor(api, base_url),
         MailcowContainersStatusSensor(api, base_url),
+        MailcowUpdateAvailableSensor(api, base_url),
     ]
 
     async_add_entities(sensors, True)
