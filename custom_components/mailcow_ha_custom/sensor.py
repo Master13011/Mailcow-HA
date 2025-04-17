@@ -1,5 +1,6 @@
 """Platform for sensor integration."""
 import logging
+import aiohttp
 
 from homeassistant.components.sensor import (
     SensorEntity,
