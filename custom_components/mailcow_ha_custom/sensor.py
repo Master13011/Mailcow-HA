@@ -229,7 +229,7 @@ class MailcowContainersStatusSensor(MailcowSensor):
 class MailcowUpdateAvailableSensor(MailcowSensor):
     """Representation of a Mailcow update available sensor."""
 
-    def __init__(self, api: MailcowAPI, base_url: str, forced_version: str = None"):
+    def __init__(self, api: MailcowAPI, base_url: str, forced_version: str = None):
         super().__init__(api, base_url)
         self._attr_name = "Mailcow Update Available"
         self._attr_unique_id = f"mailcow_update_available_{''.join(filter(str.isalnum, self._base_url))}"
