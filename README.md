@@ -1,4 +1,4 @@
-[EN]([https://hacs.xyz](https://github.com/Master13011/Mailcow-HA/blob/main/README_en.md))
+[EN]([https://hacs.xyz](https://github.com/Master13011/Mailcow-HA/blob/main/README_en.md)
 
 # Intégration Mailcow pour Home Assistant
 
