@@ -7,6 +7,7 @@ Cette intégration personnalisée permet de connecter votre serveur Mailcow à H
 - **Surveillance des boîtes aux lettres** : Affiche le nombre total de boîtes aux lettres gérées par votre serveur Mailcow.
 - **Suivi des domaines** : Montre le nombre de domaines configurés sur votre serveur Mailcow.
 - **Version de Mailcow** : Indique la version actuelle de votre installation Mailcow.
+- **Vérification MAJ Mailcow** : Indique si une nouvelle version de votre installation Mailcow est disponible.
 - **État du service Vmail** : Surveille l'utilisation du disque pour le service de messagerie virtuelle (Vmail).
 - **Statut des conteneurs** : Fournit un aperçu de l'état de tous les conteneurs Docker associés à Mailcow.
 
