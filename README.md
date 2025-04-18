@@ -1,3 +1,5 @@
+**[EN]([https://hacs.xyz](https://github.com/Master13011/Mailcow-HA/blob/main/README_en.md))**
+
 # Intégration Mailcow pour Home Assistant
 
 Cette intégration personnalisée permet de connecter votre serveur Mailcow à Home Assistant, offrant une visibilité en temps réel sur l'état et les performances de votre infrastructure de messagerie .
