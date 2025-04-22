@@ -1,4 +1,3 @@
-"""Platform for sensor integration."""
 import logging
 import aiohttp
 import time
@@ -23,9 +22,8 @@ async def async_setup_entry(
     config_entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the Mailcow sensors."""
     base_url = config_entry.data["base_url"]
-    api = hass.data[DOMAIN][config_entry.entry_id]  # Get the API instance
+    api = hass.data[DOMAIN][config_entry.entry_id]
 
     _LOGGER.debug("Setting up Mailcow sensors.")
 
@@ -43,45 +41,35 @@ async def async_setup_entry(
 
 
 class MailcowSensor(SensorEntity):
-    """Representation of a Mailcow sensor."""
-
     def __init__(self, api: MailcowAPI, base_url: str):
-        """Initialize the sensor."""
         self.api = api
         self._attr_state_class = SensorStateClass.MEASUREMENT
         self._base_url = base_url
-        self._attr_unique_id = None  # Will be set by child classes
+        self._attr_unique_id = None
         self._cache = {}
-        self._cache_expiry = 600  # Cache expiry time in seconds (10 minutes)
+        self._cache_expiry = 43200  # 12h
 
     def _get_cached_data(self, key):
-        """Retrieve cached data if not expired."""
         cached = self._cache.get(key)
         if cached and (cached["timestamp"] + self._cache_expiry > time.time()):
             return cached["value"]
         return None
 
     def _set_cache_data(self, key, value):
-        """Set data in the cache."""
-        self._cache[key] = {
-            "value": value,
-            "timestamp": time.time()
-        }
+        self._cache[key] = {"value": value, "timestamp": time.time()}
+
     @property
     def device_info(self):
-        """Return device information about this Mailcow instance."""
         return {
             "identifiers": {("mailcow", self._base_url)},
             "name": "Mailcow",
             "manufacturer": "Mailcow",
             "model": "API",
-            "sw_version": "Unknown",  # This will be updated in the MailcowVersionSensor
+            "sw_version": "Unknown",
         }
 
 
 class MailcowMailboxCountSensor(MailcowSensor):
-    """Representation of a Mailcow mailbox count sensor."""
-
     def __init__(self, api: MailcowAPI, base_url: str):
         super().__init__(api, base_url)
         self._attr_name = "Mailcow Mailbox Count"
@@ -89,26 +77,20 @@ class MailcowMailboxCountSensor(MailcowSensor):
         self._attr_icon = "mdi:email-multiple"
 
     async def async_update(self) -> None:
-        """Fetch new state data for the sensor."""
         try:
-            mailbox_count = await self.api.get_mailbox_count()
-            if mailbox_count is not None:
+            mailbox_count = self._get_cached_data("mailbox_count")
+            if mailbox_count is None:
+                mailbox_count = await self.api.get_mailbox_count()
+                if mailbox_count is not None:
                     self._set_cache_data("mailbox_count", mailbox_count)
-                    _LOGGER.debug(f"Mailbox count cached: {mailbox_count}")
-            
-            if mailbox_count is not None:
-                self._attr_native_value = int(mailbox_count)  # Ensure it's an integer
-                _LOGGER.debug(f"Mailbox count updated to: {self._attr_native_value}")
-            else:
-                _LOGGER.warning("Mailbox count is None, not updating state")
+
+            self._attr_native_value = int(mailbox_count) if mailbox_count is not None else None
         except Exception as e:
             _LOGGER.error(f"Error getting mailbox count: {e}")
-            self._attr_native_value = None  # Set state to None on error
+            self._attr_native_value = None
 
 
 class MailcowDomainCountSensor(MailcowSensor):
-    """Representation of a Mailcow domain count sensor."""
-
     def __init__(self, api: MailcowAPI, base_url: str):
         super().__init__(api, base_url)
         self._attr_name = "Mailcow Domain Count"
@@ -116,27 +98,20 @@ class MailcowDomainCountSensor(MailcowSensor):
         self._attr_icon = "mdi:domain"
 
     async def async_update(self) -> None:
-        """Fetch new state data for the sensor."""
         try:
             domain_count = self._get_cached_data("domain_count")
             if domain_count is None:
                 domain_count = await self.api.get_domain_count()
                 if domain_count is not None:
                     self._set_cache_data("domain_count", domain_count)
-                    _LOGGER.debug(f"Domain count cached: {domain_count}")
-            
-            if domain_count is not None:
-                self._attr_native_value = int(domain_count)  # Ensure it's an integer
-                _LOGGER.debug(f"Domain count updated to: {self._attr_native_value}")
-            else:
-                _LOGGER.warning("Domain count is None, not updating state")
+
+            self._attr_native_value = int(domain_count) if domain_count is not None else None
         except Exception as e:
             _LOGGER.error(f"Error getting domain count: {e}")
-            self._attr_native_value = None  # Set state to None on error
+            self._attr_native_value = None
+
 
 class MailcowVersionSensor(MailcowSensor):
-    """Representation of a Mailcow version sensor."""
-
     def __init__(self, api: MailcowAPI, base_url: str):
         super().__init__(api, base_url)
         self._attr_name = "Mailcow Version"
@@ -145,26 +120,23 @@ class MailcowVersionSensor(MailcowSensor):
         self._attr_state_class = None
 
     async def async_update(self) -> None:
-        """Fetch new state data for the sensor."""
-        _LOGGER.debug("Starting update for MailcowVersionSensor")
         try:
             version = self._get_cached_data("mailcow_version")
             if version is None:
                 version = await self.api.get_status_version()
                 if version is not None:
                     self._set_cache_data("mailcow_version", version)
-                    _LOGGER.debug(f"Mailcow version cached: {version}")
-            
+
             if version is not None:
-                self._attr_native_value = str(version)  # Ensure it's a string
+                self._attr_native_value = str(version)
                 self._attr_extra_state_attributes = {"version": version}
-                self.device_info["sw_version"] = version  # Update device info
-                _LOGGER.debug(f"Mailcow version updated to: {self._attr_native_value}")
+                self.device_info["sw_version"] = version
             else:
-                _LOGGER.warning("Version info is None, not updating state")
+                self._attr_native_value = None
         except Exception as e:
-            _LOGGER.exception(f"Error getting Mailcow version: {e}")
-            self._attr_native_value = None  # Set state to None on error
+            _LOGGER.error(f"Error getting Mailcow version: {e}")
+            self._attr_native_value = None
+
 
 class MailcowVmailStatusSensor(MailcowSensor):
     def __init__(self, api: MailcowAPI, base_url: str):
@@ -177,9 +149,13 @@ class MailcowVmailStatusSensor(MailcowSensor):
 
     async def async_update(self) -> None:
         try:
-            vmail_status = await self.api.get_status_vmail()
+            vmail_status = self._get_cached_data("vmail_status")
+            if vmail_status is None:
+                vmail_status = await self.api.get_status_vmail()
+                if vmail_status:
+                    self._set_cache_data("vmail_status", vmail_status)
+
             if vmail_status:
-                # Remove the '%' sign and convert to float
                 used_percent = float(vmail_status.get("used_percent", "0").rstrip('%'))
                 self._attr_native_value = used_percent
                 self._attr_extra_state_attributes = {
@@ -193,9 +169,10 @@ class MailcowVmailStatusSensor(MailcowSensor):
                 self._attr_native_value = None
                 self._attr_extra_state_attributes = {}
         except Exception as e:
+            _LOGGER.error(f"Error getting vmail status: {e}")
             self._attr_native_value = None
             self._attr_extra_state_attributes = {}
-            _LOGGER.error(f"Error getting vmail status: {e}")
+
 
 class MailcowContainersStatusSensor(MailcowSensor):
     def __init__(self, api: MailcowAPI, base_url: str):
@@ -207,44 +184,44 @@ class MailcowContainersStatusSensor(MailcowSensor):
 
     async def async_update(self) -> None:
         try:
-            containers_status = await self.api.get_status_containers()
+            containers_status = self._get_cached_data("containers_status")
+            if containers_status is None:
+                containers_status = await self.api.get_status_containers()
+                if containers_status:
+                    self._set_cache_data("containers_status", containers_status)
+
             if containers_status:
-                all_running = all(container["state"] == "running" for container in containers_status.values())
+                all_running = all(c["state"] == "running" for c in containers_status.values())
                 self._attr_native_value = "All Running" if all_running else "Issues Detected"
                 self._attr_extra_state_attributes = {
-                    container_name: {
-                        "state": info["state"],
-                        "started_at": info["started_at"],
-                        "image": info["image"]
-                    } for container_name, info in containers_status.items()
+                    name: {
+                        "state": c["state"],
+                        "started_at": c["started_at"],
+                        "image": c["image"]
+                    } for name, c in containers_status.items()
                 }
             else:
                 self._attr_native_value = "Unknown"
                 self._attr_extra_state_attributes = {}
         except Exception as e:
+            _LOGGER.error(f"Error getting containers status: {e}")
             self._attr_native_value = "Error"
             self._attr_extra_state_attributes = {}
-            _LOGGER.error(f"Error getting containers status: {e}")
+
 
 class MailcowUpdateAvailableSensor(MailcowSensor):
-    """Representation of a Mailcow update available sensor."""
-
     def __init__(self, api: MailcowAPI, base_url: str, forced_version: str = None):
         super().__init__(api, base_url)
         self._attr_name = "Mailcow Update Available"
         self._attr_unique_id = f"mailcow_update_available_{''.join(filter(str.isalnum, self._base_url))}"
-        self._attr_icon = "mdi:package-up"  # Default icon
+        self._attr_icon = "mdi:package-up"
         self._attr_state_class = None
-
-	# Version forcée (optionnelle)
         self._forced_version = forced_version
 
-
     async def fetch_latest_github_version(self):
-        """Fetch the latest Mailcow version tag from GitHub with retries."""
         github_url = "https://api.github.com/repos/mailcow/mailcow-dockerized/tags"
         retries = 3
-        delay = 5  # seconds
+        delay = 5
 
         for attempt in range(retries):
             try:
@@ -255,37 +232,30 @@ class MailcowUpdateAvailableSensor(MailcowSensor):
                             if tags:
                                 sorted_tags = sorted(tags, key=lambda x: x["name"], reverse=True)
                                 return sorted_tags[0]["name"]
-                            else:
-                                _LOGGER.warning("No tags returned from GitHub")
             except Exception as e:
                 _LOGGER.error(f"Error fetching GitHub version (attempt {attempt + 1}/{retries}): {e}")
                 if attempt < retries - 1:
-                    await asyncio.sleep(delay)  # Wait before retrying
-                else:
-                    return "unknown"  # Retournons un 'unknown' si ça échoue
-
+                    await asyncio.sleep(delay)
+        return "unknown"
 
     async def async_update(self) -> None:
-        _LOGGER.debug("Starting update for MailcowUpdateAvailableSensor")
         try:
             current_version = await self.api.get_status_version()
 
-            # Si une version est forcée, on l'utilise
             if self._forced_version:
                 latest_version = self._forced_version
-                _LOGGER.debug(f"[MailcowUpdateAvailableSensor] Forcing version: {latest_version}")
             else:
-                # Sinon, on récupère la version la plus récente depuis GitHub
-                latest_version = await self.fetch_latest_github_version()
+                latest_version = self._get_cached_data("latest_version")
+                if not latest_version:
+                    latest_version = await self.fetch_latest_github_version()
+                    self._set_cache_data("latest_version", latest_version)
 
             update_available = (
                 latest_version != current_version
                 if current_version and latest_version else "Unavailable"
             )
-            
-            self._attr_native_value = "Update available" if update_available else "Up to date"
 
-            # Change icon to 'mdi:package-up' when update is available
+            self._attr_native_value = "Update available" if update_available else "Up to date"
             self._attr_icon = "mdi:package-up" if update_available else "mdi:package-check"
 
             self._attr_extra_state_attributes = {
