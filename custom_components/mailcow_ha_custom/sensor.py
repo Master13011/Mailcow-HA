@@ -184,11 +184,8 @@ class MailcowContainersStatusSensor(MailcowSensor):
 
     async def async_update(self) -> None:
         try:
-            containers_status = self._get_cached_data("containers_status")
-            if containers_status is None:
-                containers_status = await self.api.get_status_containers()
-                if containers_status:
-                    self._set_cache_data("containers_status", containers_status)
+            # No cache: always fetch live data
+            containers_status = await self.api.get_status_containers()
 
             if containers_status:
                 all_running = all(c["state"] == "running" for c in containers_status.values())
@@ -207,7 +204,6 @@ class MailcowContainersStatusSensor(MailcowSensor):
             _LOGGER.error(f"Error getting containers status: {e}")
             self._attr_native_value = "Error"
             self._attr_extra_state_attributes = {}
-
 
 class MailcowUpdateAvailableSensor(MailcowSensor):
     def __init__(self, api: MailcowAPI, base_url: str, forced_version: str = None):
