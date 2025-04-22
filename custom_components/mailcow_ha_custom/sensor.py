@@ -148,6 +148,7 @@ class MailcowVmailStatusSensor(MailcowSensor):
         self._attr_native_unit_of_measurement = "%"
 
     async def async_update(self) -> None:
+        _LOGGER.debug("[MailcowContainersStatusSensor] Updating container status (no cache)")
         try:
             vmail_status = self._get_cached_data("vmail_status")
             if vmail_status is None:
@@ -165,9 +166,11 @@ class MailcowVmailStatusSensor(MailcowSensor):
                     "total": vmail_status.get("total"),
                     "type": vmail_status.get("type")
                 }
+                _LOGGER.debug(f"[MailcowContainersStatusSensor] Status updated: {self._attr_native_value}")
             else:
                 self._attr_native_value = None
                 self._attr_extra_state_attributes = {}
+                _LOGGER.warning("[MailcowContainersStatusSensor] No container status returned")
         except Exception as e:
             _LOGGER.error(f"Error getting vmail status: {e}")
             self._attr_native_value = None
