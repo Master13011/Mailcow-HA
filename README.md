@@ -56,8 +56,7 @@ GET
 
 Une fois installée et configurée, l'intégration Mailcow ajoutera plusieurs capteurs à votre instance Home Assistant, vous permettant de surveiller facilement l'état de votre serveur Mailcow depuis votre tableau de bord Home Assistant.
 
-![{2687CF4D-6E2D-4CA9-BBE2-77BEEF171737}](https://github.com/user-attachments/assets/c73b6950-866c-41f7-b0b1-b1c40ecc6a42)
-
+![{979BA34E-C4AE-4883-AC5A-E22A03D7F318}](https://github.com/user-attachments/assets/5ea7db31-d4be-4402-912a-54bde5f5df3f)
 
 ## Contribution
 
