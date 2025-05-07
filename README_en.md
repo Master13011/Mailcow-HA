@@ -35,7 +35,7 @@ This custom integration allows you to connect your Mailcow server to Home Assist
 From your Mailcow Admin Interface:  
 `https://mail.domainmailcow.com/admin`, enable the API.
 
-![{979BA34E-C4AE-4883-AC5A-E22A03D7F318}](https://github.com/user-attachments/assets/ab858e9a-90a8-40f2-ae17-abdfd707be85)
+![image](https://github.com/user-attachments/assets/a15a9ce1-fb76-493c-b969-4e1643cdcdfc)
 
 Your instance’s APIs are available here:  
 `https://mail.domainmailcow.com/api/#/`
@@ -45,4 +45,6 @@ Endpoints used:
 ```http
 GET /api/v1/get/status/containers  
 GET /api/v1/get/status/vmail  
-GET /api/v1/get/status/version  
+GET /api/v1/get/status/version
+
+![{979BA34E-C4AE-4883-AC5A-E22A03D7F318}](https://github.com/user-attachments/assets/ab858e9a-90a8-40f2-ae17-abdfd707be85)
