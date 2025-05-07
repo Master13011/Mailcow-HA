@@ -7,14 +7,14 @@
         "data": {
           "base_url": "Mailcow Base URL (EX. https://mail.domainmailcow.com)",
           "api_key": "API Key",
-          "is_not_check_start_hour": "Start hour for not checking updates",
-          "is_not_check_end_hour": "End hour for not checking updates"
+          "is_not_check_start_hour": "Start hour for not checking entity",
+          "is_not_check_end_hour": "End hour for not checking entity"
         },
         "data_description": {
           "base_url": "The base URL of your Mailcow installation",
           "api_key": "The API key for your Mailcow installation",
-          "is_not_check_start_hour": "Start hour (0-23) for not checking updates",
-          "is_not_check_end_hour": "End hour (0-23) for not checking updates"
+          "is_not_check_start_hour": "Start hour (0-23) for not checking entity",
+          "is_not_check_end_hour": "End hour (0-23) for not checking entity"
         }
       }
     },
