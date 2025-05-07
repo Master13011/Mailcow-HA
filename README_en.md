@@ -11,6 +11,7 @@ This custom integration allows you to connect your Mailcow server to Home Assist
 - **Vmail Service Status**: Monitors disk usage for the virtual mail service (Vmail).  
 - **Container Status**: Provides an overview of the status of all Docker containers associated with Mailcow.
 - **Intelligent Caching** 🧠: All sensor data is cached locally for 12 hours to reduce load on the Mailcow API and improve Home Assistant performance (Without Containers status Docker -> 10 mins.).
+- **Enable or disable entity verification** : Allows enabling or disabling entity verification, with the option to set a start and end time.
 
 ## Installation
 
