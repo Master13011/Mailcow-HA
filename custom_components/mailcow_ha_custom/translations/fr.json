@@ -12,8 +12,8 @@
         "data_description": {
           "base_url": "L’URL de base de votre installation Mailcow",
           "api_key": "La clé API de votre installation Mailcow",
-          "is_not_check_start_hour": "Heure de début (0-23) pour ne pas vérifier les mises à jour",
-          "is_not_check_end_hour": "Heure de fin (0-23) pour ne pas vérifier les mises à jour"
+          "is_not_check_start_hour": "Heure de début (0-23) pour ne pas vérifier les entités",
+          "is_not_check_end_hour": "Heure de fin (0-23) pour ne pas vérifier les entités"
         }
       }
     },
