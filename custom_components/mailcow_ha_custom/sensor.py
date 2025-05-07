@@ -2,6 +2,7 @@ import logging
 import aiohttp
 import time
 import asyncio
+from datetime import datetime
 
 from homeassistant.components.sensor import (
     SensorEntity,
@@ -17,6 +18,14 @@ from .const import DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 
+def sanitize_url(url: str) -> str:
+    return ''.join(filter(str.isalnum, url))
+
+def is_not_check():
+    """Returns True if the current time is between 23h and 5h."""
+    now = datetime.now()
+    return 23 <= now.hour or now.hour < 5
+    
 async def async_setup_entry(
     hass: HomeAssistant,
     config_entry: ConfigEntry,
@@ -65,7 +74,7 @@ class MailcowSensor(SensorEntity):
             "name": "Mailcow",
             "manufacturer": "Mailcow",
             "model": "API",
-            "sw_version": "Unknown",
+            "sw_version": self._get_cached_data("mailcow_version") or "Unknown",
         }
 
 
@@ -73,11 +82,15 @@ class MailcowMailboxCountSensor(MailcowSensor):
     def __init__(self, api: MailcowAPI, base_url: str):
         super().__init__(api, base_url)
         self._attr_name = "Mailcow Mailbox Count"
-        self._attr_unique_id = f"mailcow_mailbox_count_{''.join(filter(str.isalnum, self._base_url))}"
+        self._attr_unique_id = f"mailcow_mailbox_count_{sanitize_url(self._base_url)}"
         self._attr_icon = "mdi:email-multiple"
 
     async def async_update(self) -> None:
         try:
+            if is_not_check():
+                _LOGGER.debug("Skipping (23h-5h).")
+                return  # Skip
+            
             mailbox_count = self._get_cached_data("mailbox_count")
             if mailbox_count is None:
                 mailbox_count = await self.api.get_mailbox_count()
@@ -94,11 +107,15 @@ class MailcowDomainCountSensor(MailcowSensor):
     def __init__(self, api: MailcowAPI, base_url: str):
         super().__init__(api, base_url)
         self._attr_name = "Mailcow Domain Count"
-        self._attr_unique_id = f"mailcow_domain_count_{''.join(filter(str.isalnum, self._base_url))}"
+        self._attr_unique_id = f"mailcow_domain_count_{sanitize_url(self._base_url)}"
         self._attr_icon = "mdi:domain"
 
     async def async_update(self) -> None:
         try:
+            if is_not_check():
+                _LOGGER.debug("Skipping (23h-5h).")
+                return  # Skip
+            
             domain_count = self._get_cached_data("domain_count")
             if domain_count is None:
                 domain_count = await self.api.get_domain_count()
@@ -115,12 +132,16 @@ class MailcowVersionSensor(MailcowSensor):
     def __init__(self, api: MailcowAPI, base_url: str):
         super().__init__(api, base_url)
         self._attr_name = "Mailcow Version"
-        self._attr_unique_id = f"mailcow_version_{''.join(filter(str.isalnum, self._base_url))}"
+        self._attr_unique_id = f"mailcow_version_{sanitize_url(self._base_url)}"
         self._attr_icon = "mdi:package-variant"
         self._attr_state_class = None
 
     async def async_update(self) -> None:
         try:
+            if is_not_check():
+                _LOGGER.debug("Skipping (23h-5h).")
+                return  # Skip
+            
             version = self._get_cached_data("mailcow_version")
             if version is None:
                 version = await self.api.get_status_version()
@@ -130,7 +151,6 @@ class MailcowVersionSensor(MailcowSensor):
             if version is not None:
                 self._attr_native_value = str(version)
                 self._attr_extra_state_attributes = {"version": version}
-                self.device_info["sw_version"] = version
             else:
                 self._attr_native_value = None
         except Exception as e:
@@ -142,14 +162,17 @@ class MailcowVmailStatusSensor(MailcowSensor):
     def __init__(self, api: MailcowAPI, base_url: str):
         super().__init__(api, base_url)
         self._attr_name = "Mailcow Vmail Disk Usage"
-        self._attr_unique_id = f"mailcow_vmail_disk_usage_{''.join(filter(str.isalnum, self._base_url))}"
+        self._attr_unique_id = f"mailcow_vmail_disk_usage_{sanitize_url(self._base_url)}"
         self._attr_icon = "mdi:harddisk"
         self._attr_state_class = None
         self._attr_native_unit_of_measurement = "%"
 
     async def async_update(self) -> None:
-        _LOGGER.debug("[MailcowContainersStatusSensor] Updating container status (no cache)")
         try:
+            if is_not_check():
+                _LOGGER.debug("Skipping (23h-5h).")
+                return  # Skip
+            
             vmail_status = self._get_cached_data("vmail_status")
             if vmail_status is None:
                 vmail_status = await self.api.get_status_vmail()
@@ -157,7 +180,8 @@ class MailcowVmailStatusSensor(MailcowSensor):
                     self._set_cache_data("vmail_status", vmail_status)
 
             if vmail_status:
-                used_percent = float(vmail_status.get("used_percent", "0").rstrip('%'))
+                used_str = vmail_status.get("used_percent", "0")
+                used_percent = float(used_str.rstrip('%')) if used_str.endswith('%') else float(used_str)
                 self._attr_native_value = used_percent
                 self._attr_extra_state_attributes = {
                     "status": "OK" if vmail_status.get("type") == "info" else "Error",
@@ -166,11 +190,9 @@ class MailcowVmailStatusSensor(MailcowSensor):
                     "total": vmail_status.get("total"),
                     "type": vmail_status.get("type")
                 }
-                _LOGGER.debug(f"[MailcowContainersStatusSensor] Status updated: {self._attr_native_value}")
             else:
                 self._attr_native_value = None
                 self._attr_extra_state_attributes = {}
-                _LOGGER.warning("[MailcowContainersStatusSensor] No container status returned")
         except Exception as e:
             _LOGGER.error(f"Error getting vmail status: {e}")
             self._attr_native_value = None
@@ -181,13 +203,16 @@ class MailcowContainersStatusSensor(MailcowSensor):
     def __init__(self, api: MailcowAPI, base_url: str):
         super().__init__(api, base_url)
         self._attr_name = "Mailcow Containers Status"
-        self._attr_unique_id = f"mailcow_containers_status_{''.join(filter(str.isalnum, self._base_url))}"
+        self._attr_unique_id = f"mailcow_containers_status_{sanitize_url(self._base_url)}"
         self._attr_icon = "mdi:docker"
         self._attr_state_class = None
 
     async def async_update(self) -> None:
         try:
-            # No cache: always fetch live data
+            if is_not_check():
+                _LOGGER.debug("Skipping (23h-5h).")
+                return  # Skip
+            
             containers_status = await self.api.get_status_containers()
 
             if containers_status:
@@ -208,11 +233,12 @@ class MailcowContainersStatusSensor(MailcowSensor):
             self._attr_native_value = "Error"
             self._attr_extra_state_attributes = {}
 
+
 class MailcowUpdateAvailableSensor(MailcowSensor):
     def __init__(self, api: MailcowAPI, base_url: str, forced_version: str = None):
         super().__init__(api, base_url)
         self._attr_name = "Mailcow Update Available"
-        self._attr_unique_id = f"mailcow_update_available_{''.join(filter(str.isalnum, self._base_url))}"
+        self._attr_unique_id = f"mailcow_update_available_{sanitize_url(self._base_url)}"
         self._attr_icon = "mdi:package-up"
         self._attr_state_class = None
         self._forced_version = forced_version
@@ -239,6 +265,10 @@ class MailcowUpdateAvailableSensor(MailcowSensor):
 
     async def async_update(self) -> None:
         try:
+            if is_not_check():
+                _LOGGER.debug("Skipping (23h-5h).")
+                return  # Skip
+            
             current_version = await self.api.get_status_version()
 
             if self._forced_version:
