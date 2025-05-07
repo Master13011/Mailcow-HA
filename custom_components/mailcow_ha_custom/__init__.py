@@ -5,6 +5,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 
 from .const import DOMAIN, CONF_API_KEY, CONF_BASE_URL
+from .config_flow import MailcowOptionsFlowHandler
 from .api import MailcowAPI
 
 _LOGGER = logging.getLogger(__name__)
@@ -51,3 +52,6 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     else:
         _LOGGER.warning("Mailcow integration failed to unload.")
     return unload_ok
+
+async def async_get_options_flow(config_entry: ConfigEntry):
+    return MailcowOptionsFlowHandler(config_entry)
