@@ -5,15 +5,12 @@
         "title": "Connexion à Mailcow",
         "data": {
           "base_url": "URL de base de Mailcow (ex. https://mail.domaine.fr)",
-          "api_key": "Clé API",
-          "is_not_check_start_hour": "Heure de début de non-vérification",
-          "is_not_check_end_hour": "Heure de fin de non-vérification"
+          "api_key": "Clé API"
         },
         "data_description": {
           "base_url": "L’URL de base de votre installation Mailcow",
           "api_key": "La clé API de votre installation Mailcow",
-          "is_not_check_start_hour": "Heure de début (0-23) pour ne pas vérifier les entités",
-          "is_not_check_end_hour": "Heure de fin (0-23) pour ne pas vérifier les entités"
+          "disable_check_at_night": "Désactivation de 23h00 à 05H00 de la vérification des entités"
         }
       }
     },
@@ -27,12 +24,10 @@
       "init": {
         "title": "Options Mailcow",
         "data": {
-          "is_not_check_start_hour": "Heure de début de non-vérification",
-          "is_not_check_end_hour": "Heure de fin de non-vérification"
+          "disable_check_at_night": "Désactivation de 23h00 à 05H00 de la vérification des entités"
         },
         "data_description": {
-          "is_not_check_start_hour": "Heure de début (0-23) pour ne pas vérifier les entités",
-          "is_not_check_end_hour": "Heure de fin (0-23) pour ne pas vérifier les entités"
+          "disable_check_at_night": "Désactivation de 23h00 à 05H00 de la vérification des entités"
         }
       }
     }
