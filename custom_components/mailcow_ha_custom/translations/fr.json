@@ -11,7 +11,7 @@
         "data_description": {
           "base_url": "L'URL de base de votre installation Mailcow",
           "api_key": "La clé API de votre installation Mailcow",
-          "disable_check_at_night": "Désactivation de 23h00 à 05h00 de la vérification des entités"
+          "disable_check_at_night": "Désactive la vérification des entités pendant la nuit (de 23h00 à 5h00)"
         }
       }
     },
