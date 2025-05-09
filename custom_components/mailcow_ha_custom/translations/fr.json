@@ -5,7 +5,8 @@
         "title": "Connexion à Mailcow",
         "data": {
           "base_url": "URL de base de Mailcow (ex. https://mail.domaine.fr)",
-          "api_key": "Clé API"
+          "api_key": "Clé API",
+          "disable_check_at_night": "Désactiver la vérification des mises à jour entre 23h00 et 5h00"
         },
         "data_description": {
           "base_url": "L'URL de base de votre installation Mailcow",
