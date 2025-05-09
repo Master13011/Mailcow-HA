@@ -11,7 +11,7 @@
         "data_description": {
           "base_url": "The base URL of your Mailcow installation",
           "api_key": "The API key for your Mailcow installation",
-          "disable_check_at_night": "Skipping 23h00-05H00 update due to disabled night check"
+          "disable_check_at_night": "Skipping 23h00-05H00 entities due to disabled night check"
         }
       }
     },
