@@ -1,4 +1,3 @@
-"""Config flow for Mailcow integration."""
 import logging
 import voluptuous as vol
 from homeassistant import config_entries
@@ -10,13 +9,11 @@ from .const import (
     DOMAIN,
     CONF_API_KEY,
     CONF_BASE_URL,
-    IS_NOT_CHECK_START_HOUR,
-    IS_NOT_CHECK_END_HOUR,
+    CONF_DISABLE_CHECK_AT_NIGHT,
 )
 from .api import MailcowAPI
 
 _LOGGER = logging.getLogger(__name__)
-
 
 class CannotConnect(HomeAssistantError):
     """Error to indicate we cannot connect."""
@@ -49,8 +46,7 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         data_schema = vol.Schema({
             vol.Required(CONF_BASE_URL): str,
             vol.Required(CONF_API_KEY): str,
-            vol.Optional(IS_NOT_CHECK_START_HOUR, default=23): vol.All(vol.Coerce(int), vol.Range(min=0, max=23)),
-            vol.Optional(IS_NOT_CHECK_END_HOUR, default=5): vol.All(vol.Coerce(int), vol.Range(min=0, max=23)),
+            vol.Optional(CONF_DISABLE_CHECK_AT_NIGHT, default=False): bool,
         })
 
         return self.async_show_form(
@@ -73,36 +69,29 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         except Exception as err:
             _LOGGER.error(f"Error during validation: {err}")
             raise CannotConnect from err
+
     @staticmethod
     @callback
     def async_get_options_flow(config_entry):
-        return MailcowOptionsFlowHandler(config_entry)
+        # On n'a plus besoin de passer config_entry à MailcowOptionsFlowHandler
+        return MailcowOptionsFlowHandler()
+
 
 class MailcowOptionsFlowHandler(config_entries.OptionsFlow):
     """Handle options flow for Mailcow."""
 
-    def __init__(self, config_entry: config_entries.ConfigEntry):
-        self.config_entry = config_entry
-
     async def async_step_init(self, user_input=None):
         """Manage the options."""
         if user_input is not None:
+            # Si l'utilisateur a soumis des options, on recharge l'entrée de configuration
             await self.hass.config_entries.async_reload(self.config_entry.entry_id)
             return self.async_create_entry(title="", data=user_input)
 
-        default_start_hour = self.config_entry.options.get(
-            IS_NOT_CHECK_START_HOUR,
-            self.config_entry.data.get(IS_NOT_CHECK_START_HOUR, 23)
-        )
-
-        default_end_hour = self.config_entry.options.get(
-            IS_NOT_CHECK_END_HOUR,
-            self.config_entry.data.get(IS_NOT_CHECK_END_HOUR, 5)
-        )
+        # Accédez à self.config_entry directement
+        disable_check_at_night = self.config_entry.options.get("disable_check_at_night", False)
 
         data_schema = vol.Schema({
-            vol.Optional(IS_NOT_CHECK_START_HOUR, default=default_start_hour): vol.All(vol.Coerce(int), vol.Range(min=0, max=23)),
-            vol.Optional(IS_NOT_CHECK_END_HOUR, default=default_end_hour): vol.All(vol.Coerce(int), vol.Range(min=0, max=23)),
+            vol.Optional(CONF_DISABLE_CHECK_AT_NIGHT, default=disable_check_at_night): bool
         })
 
         return self.async_show_form(
@@ -112,4 +101,4 @@ class MailcowOptionsFlowHandler(config_entries.OptionsFlow):
 
 
 async def async_get_options_flow(config_entry):
-    return MailcowOptionsFlowHandler(config_entry)
+    return MailcowOptionsFlowHandler()
