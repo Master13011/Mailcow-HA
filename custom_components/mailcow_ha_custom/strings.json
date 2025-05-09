@@ -5,7 +5,8 @@
         "title": "Connect to Mailcow",
         "data": {
           "base_url": "Mailcow Base URL (EX. https://mail.domainmailcow.com)",
-          "api_key": "API Key"
+          "api_key": "API Key",
+          "disable_check_at_night": "Disable update checks between 11:00 PM and 5:00 AM"
         },
         "data_description": {
           "base_url": "The base URL of your Mailcow installation",
