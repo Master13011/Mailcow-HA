@@ -52,6 +52,8 @@ async def async_setup_entry(
 
 
 class MailcowSensor(SensorEntity):
+    _attr_should_poll = True
+    SCAN_INTERVAL = timedelta(minutes=5)
     def __init__(self, api: MailcowAPI, base_url: str, entry_id: str, disable_check_at_night: bool):
         self.api = api
         self._base_url = base_url
