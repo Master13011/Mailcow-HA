@@ -73,16 +73,11 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     @staticmethod
     @callback
     def async_get_options_flow(config_entry):
-        # Passez config_entry à MailcowOptionsFlowHandler
-        return MailcowOptionsFlowHandler(config_entry)
+        return MailcowOptionsFlowHandler()  
 
 
 class MailcowOptionsFlowHandler(config_entries.OptionsFlow):
     """Handle options flow for Mailcow."""
-
-    def __init__(self, config_entry):
-        """Initialiser avec config_entry"""
-        self.config_entry = config_entry
 
     async def async_step_init(self, user_input=None):
         """Manage the options."""
