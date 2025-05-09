@@ -25,7 +25,7 @@
       "init": {
         "title": "Options Mailcow",
         "data": {
-          "disable_check_at_night": "Désactiver la vérification des mises à jour entre 23h00 et 5h00"
+          "disable_check_at_night": "Désactiver la vérification des entités entre 23h00 et 5h00"
         },
         "data_description": {
           "disable_check_at_night": "Désactive la vérification des entités pendant la nuit (de 23h00 à 5h00)"
