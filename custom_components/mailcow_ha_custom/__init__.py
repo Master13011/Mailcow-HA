@@ -51,3 +51,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     else:
         _LOGGER.warning("Mailcow integration failed to unload.")
     return unload_ok
+
+async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Handle reload of an entry."""
+    await async_unload_entry(hass, entry)
+    await async_setup_entry(hass, entry)
