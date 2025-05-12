@@ -26,7 +26,7 @@ class MailcowCoordinator(DataUpdateCoordinator):
             hass,
             _LOGGER,
             name="Mailcow Coordinator",
-            update_interval=timedelta(seconds=scan_interval),
+            update_interval=timedelta(minutes=scan_interval),
         )
         self.api = api
         self.disable_check_at_night = disable_check_at_night
@@ -77,7 +77,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, asyn
     base_url = config_entry.data["base_url"]
     api = hass.data[DOMAIN][config_entry.entry_id]
     disable_check_at_night = config_entry.options.get(CONF_DISABLE_CHECK_AT_NIGHT, False)
-    scan_interval = config_entry.options.get(CONF_SCAN_INTERVAL, 600)
+    scan_interval = config_entry.options.get(CONF_SCAN_INTERVAL, 10)
 
     coordinator = MailcowCoordinator(hass, api, scan_interval, disable_check_at_night, config_entry.entry_id, base_url)
     await coordinator.async_config_entry_first_refresh()
