@@ -43,7 +43,7 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     },
                     options={
                         CONF_DISABLE_CHECK_AT_NIGHT: user_input.get(CONF_DISABLE_CHECK_AT_NIGHT, False),
-                        CONF_SCAN_INTERVAL: user_input.get(CONF_SCAN_INTERVAL, 600),
+                        CONF_SCAN_INTERVAL: user_input.get(CONF_SCAN_INTERVAL, 10),
                     },
                 )
             except CannotConnect:
@@ -58,7 +58,7 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             vol.Required(CONF_BASE_URL): str,
             vol.Required(CONF_API_KEY): str,
             vol.Optional(CONF_DISABLE_CHECK_AT_NIGHT, default=False): bool,
-            vol.Optional(CONF_SCAN_INTERVAL, default=600): int,
+            vol.Optional(CONF_SCAN_INTERVAL, default=10): int,
         })
 
         return self.async_show_form(
@@ -97,7 +97,7 @@ class MailcowOptionsFlowHandler(config_entries.OptionsFlow):
 
         # Utilisation de self.config_entry pour obtenir les options existantes
         disable_check_at_night = self.config_entry.options.get("disable_check_at_night", False)
-        scan_interval = self.config_entry.options.get(CONF_SCAN_INTERVAL, 600)
+        scan_interval = self.config_entry.options.get(CONF_SCAN_INTERVAL, 10)
         
         data_schema = vol.Schema({
             vol.Optional(CONF_DISABLE_CHECK_AT_NIGHT, default=disable_check_at_night): bool,
@@ -114,7 +114,7 @@ class MailcowOptionsFlowHandler(config_entries.OptionsFlow):
         # Les options à appliquer
         options = {
             CONF_DISABLE_CHECK_AT_NIGHT: user_input.get(CONF_DISABLE_CHECK_AT_NIGHT, False),
-            CONF_SCAN_INTERVAL: user_input.get(CONF_SCAN_INTERVAL, 600),
+            CONF_SCAN_INTERVAL: user_input.get(CONF_SCAN_INTERVAL, 10),
         }
 
         # Mise à jour des options via self.config_entry
