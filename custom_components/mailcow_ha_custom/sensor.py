@@ -1,292 +1,196 @@
+# sensor.py
 import logging
 import aiohttp
-import time
-import asyncio
-from datetime import datetime
-
-from homeassistant.components.sensor import (
-    SensorEntity,
-    SensorStateClass,
-)
+from datetime import datetime, timedelta
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed, CoordinatorEntity
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.components.sensor import SensorEntity, SensorStateClass
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .api import MailcowAPI
-from .const import DOMAIN, CONF_DISABLE_CHECK_AT_NIGHT
+from .const import DOMAIN, CONF_DISABLE_CHECK_AT_NIGHT, CONF_SCAN_INTERVAL
 
 _LOGGER = logging.getLogger(__name__)
-
 
 def sanitize_url(url: str) -> str:
     return ''.join(filter(str.isalnum, url))
 
-
 def is_night_time() -> bool:
-    """Returns True if the current time is between 23:00 and 05:00."""
     now = datetime.now().hour
     return now >= 23 or now < 5
 
+class MailcowCoordinator(DataUpdateCoordinator):
+    def __init__(self, hass, api: MailcowAPI, scan_interval: int, disable_check_at_night: bool, entry_id: str, base_url: str):
+        super().__init__(
+            hass,
+            _LOGGER,
+            name="Mailcow Coordinator",
+            update_interval=timedelta(seconds=scan_interval),
+        )
+        self.api = api
+        self.disable_check_at_night = disable_check_at_night
+        self.entry_id = entry_id
+        self._base_url = base_url
+        self._cached_latest_version = None
 
-async def async_setup_entry(
-    hass: HomeAssistant,
-    config_entry: ConfigEntry,
-    async_add_entities: AddEntitiesCallback,
-) -> None:
+    async def fetch_latest_github_version(self):
+        github_url = "https://api.github.com/repos/mailcow/mailcow-dockerized/tags"
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(github_url) as response:
+                    if response.status == 200:
+                        tags = await response.json()
+                        if tags:
+                            sorted_tags = sorted(tags, key=lambda x: x["name"], reverse=True)
+                            return sorted_tags[0]["name"]
+        except Exception as e:
+            _LOGGER.error(f"Error fetching GitHub version: {e}")
+        return "unknown"
+
+    async def _async_update_data(self):
+        if self.disable_check_at_night and is_night_time():
+            _LOGGER.debug("Night check disabled; skipping data update.")
+            return {}
+        try:
+            version = await self.api.get_status_version()
+            mailbox_count = await self.api.get_mailbox_count()
+            domain_count = await self.api.get_domain_count()
+            vmail_status = await self.api.get_status_vmail()
+            containers_status = await self.api.get_status_containers()
+
+            if not self._cached_latest_version:
+                self._cached_latest_version = await self.fetch_latest_github_version()
+
+            return {
+                "version": version,
+                "mailbox_count": mailbox_count,
+                "domain_count": domain_count,
+                "vmail_status": vmail_status,
+                "containers_status": containers_status,
+                "latest_version": self._cached_latest_version,
+            }
+        except Exception as err:
+            raise UpdateFailed(f"Error fetching data: {err}")
+
+async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
     base_url = config_entry.data["base_url"]
     api = hass.data[DOMAIN][config_entry.entry_id]
     disable_check_at_night = config_entry.options.get(CONF_DISABLE_CHECK_AT_NIGHT, False)
-    _LOGGER.debug("Setting up Mailcow sensors.")
+    scan_interval = config_entry.options.get(CONF_SCAN_INTERVAL, 600)
+
+    coordinator = MailcowCoordinator(hass, api, scan_interval, disable_check_at_night, config_entry.entry_id, base_url)
+    await coordinator.async_config_entry_first_refresh()
 
     sensors = [
-        MailcowMailboxCountSensor(api, base_url, config_entry.entry_id, disable_check_at_night),
-        MailcowDomainCountSensor(api, base_url, config_entry.entry_id, disable_check_at_night),
-        MailcowVersionSensor(api, base_url, config_entry.entry_id, disable_check_at_night),
-        MailcowVmailStatusSensor(api, base_url, config_entry.entry_id, disable_check_at_night),
-        MailcowContainersStatusSensor(api, base_url, config_entry.entry_id, disable_check_at_night),
-        MailcowUpdateAvailableSensor(api, base_url, config_entry.entry_id, disable_check_at_night),
+        MailcowVersionSensor(coordinator),
+        MailcowMailboxCountSensor(coordinator),
+        MailcowDomainCountSensor(coordinator),
+        MailcowVmailStatusSensor(coordinator),
+        MailcowContainersStatusSensor(coordinator),
+        MailcowUpdateAvailableSensor(coordinator),
     ]
 
     async_add_entities(sensors, True)
-    _LOGGER.info(f"Added {len(sensors)} Mailcow sensors.")
 
-
-class MailcowSensor(SensorEntity):
-    _attr_should_poll = True
-    SCAN_INTERVAL = timedelta(minutes=5)
-    def __init__(self, api: MailcowAPI, base_url: str, entry_id: str, disable_check_at_night: bool):
-        self.api = api
-        self._base_url = base_url
-        self._entry_id = entry_id
-        self._cache = {}
-        self._cache_expiry = 43200  # 12h
-        self._disable_check_at_night = disable_check_at_night
+class MailcowSensor(CoordinatorEntity, SensorEntity):
+    def __init__(self, coordinator, name: str, key: str, icon: str):
+        super().__init__(coordinator)
+        self._attr_name = name
+        self._attr_icon = icon
+        self._key = key
+        self._base_url = coordinator._base_url
+        self._entry_id = coordinator.entry_id
+        self._attr_unique_id = f"mailcow_{key}_{sanitize_url(self._base_url)}_{self._entry_id}"
         self._attr_state_class = SensorStateClass.MEASUREMENT
 
-    def _get_cached_data(self, key):
-        cached = self._cache.get(key)
-        if cached and (cached["timestamp"] + self._cache_expiry > time.time()):
-            return cached["value"]
-        return None
-
-    def _set_cache_data(self, key, value):
-        self._cache[key] = {"value": value, "timestamp": time.time()}
-
     @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, self._entry_id)},
-            "name": "Mailcow",
-            "manufacturer": "Mailcow",
-            "model": "API",
-            "sw_version": self._get_cached_data("mailcow_version") or "Unknown",
-        }
-
-
-class MailcowMailboxCountSensor(MailcowSensor):
-    def __init__(self, api, base_url, entry_id, disable_check_at_night):
-        super().__init__(api, base_url, entry_id, disable_check_at_night)
-        self._attr_name = "Mailcow Mailbox Count"
-        self._attr_unique_id = f"mailcow_mailbox_count_{sanitize_url(self._base_url)}_{self._entry_id}"
-        self._attr_icon = "mdi:email-multiple"
-
-    async def async_update(self) -> None:
-        try:
-            if self._disable_check_at_night and is_night_time():
-                _LOGGER.debug("Skipping mailbox count update due to disabled night check.")
-                return
-            mailbox_count = self._get_cached_data("mailbox_count")
-            if mailbox_count is None:
-                mailbox_count = await self.api.get_mailbox_count()
-                if mailbox_count is not None:
-                    self._set_cache_data("mailbox_count", mailbox_count)
-            self._attr_native_value = int(mailbox_count) if mailbox_count is not None else None
-        except Exception as e:
-            _LOGGER.error(f"Error getting mailbox count: {e}")
-            self._attr_native_value = None
-
+    def native_value(self):
+        return self.coordinator.data.get(self._key)
 
 class MailcowDomainCountSensor(MailcowSensor):
-    def __init__(self, api, base_url, entry_id, disable_check_at_night):
-        super().__init__(api, base_url, entry_id, disable_check_at_night)
-        self._attr_name = "Mailcow Domain Count"
-        self._attr_unique_id = f"mailcow_domain_count_{sanitize_url(self._base_url)}_{self._entry_id}"
-        self._attr_icon = "mdi:domain"
+    def __init__(self, coordinator):
+        super().__init__(coordinator, "Mailcow Domain Count", "domain_count", "mdi:domain")
 
-    async def async_update(self) -> None:
-        try:
-            if self._disable_check_at_night and is_night_time():
-                _LOGGER.debug("Skipping domain count update due to disabled night check.")
-                return
-            domain_count = self._get_cached_data("domain_count")
-            if domain_count is None:
-                domain_count = await self.api.get_domain_count()
-                if domain_count is not None:
-                    self._set_cache_data("domain_count", domain_count)
-            self._attr_native_value = int(domain_count) if domain_count is not None else None
-        except Exception as e:
-            _LOGGER.error(f"Error getting domain count: {e}")
-            self._attr_native_value = None
-
+class MailcowMailboxCountSensor(MailcowSensor):
+    def __init__(self, coordinator):
+        super().__init__(coordinator, "Mailcow Mailbox Count", "mailbox_count", "mdi:email-multiple")
 
 class MailcowVersionSensor(MailcowSensor):
-    def __init__(self, api, base_url, entry_id, disable_check_at_night):
-        super().__init__(api, base_url, entry_id, disable_check_at_night)
-        self._attr_name = "Mailcow Version"
-        self._attr_unique_id = f"mailcow_version_{sanitize_url(self._base_url)}_{self._entry_id}"
-        self._attr_icon = "mdi:package-variant"
+    def __init__(self, coordinator):
+        super().__init__(coordinator, "Mailcow Version", "version", "mdi:package-variant")
         self._attr_state_class = None
 
-    async def async_update(self) -> None:
-        try:
-            if self._disable_check_at_night and is_night_time():
-                _LOGGER.debug("Skipping version update due to disabled night check.")
-                return
-            version = self._get_cached_data("mailcow_version")
-            if version is None:
-                version = await self.api.get_status_version()
-                if version is not None:
-                    self._set_cache_data("mailcow_version", version)
-            if version is not None:
-                self._attr_native_value = str(version)
-                self._attr_extra_state_attributes = {"version": version}
-            else:
-                self._attr_native_value = None
-        except Exception as e:
-            _LOGGER.error(f"Error getting Mailcow version: {e}")
-            self._attr_native_value = None
-
-
-class MailcowVmailStatusSensor(MailcowSensor):
-    def __init__(self, api, base_url, entry_id, disable_check_at_night):
-        super().__init__(api, base_url, entry_id, disable_check_at_night)
+class MailcowVmailStatusSensor(CoordinatorEntity, SensorEntity):
+    def __init__(self, coordinator):
+        super().__init__(coordinator)
+        self._base_url = coordinator._base_url
+        self._entry_id = coordinator.entry_id
         self._attr_name = "Mailcow Vmail Disk Usage"
         self._attr_unique_id = f"mailcow_vmail_disk_usage_{sanitize_url(self._base_url)}_{self._entry_id}"
         self._attr_icon = "mdi:harddisk"
-        self._attr_state_class = None
         self._attr_native_unit_of_measurement = "%"
+        self._attr_state_class = SensorStateClass.MEASUREMENT
 
-    async def async_update(self) -> None:
-        try:
-            if self._disable_check_at_night and is_night_time():
-                _LOGGER.debug("Skipping vmail status update due to disabled night check.")
-                return
-            vmail_status = self._get_cached_data("vmail_status")
-            if vmail_status is None:
-                vmail_status = await self.api.get_status_vmail()
-                if vmail_status:
-                    self._set_cache_data("vmail_status", vmail_status)
-            if vmail_status:
-                used_str = vmail_status.get("used_percent", "0")
-                used_percent = float(used_str.rstrip('%')) if used_str.endswith('%') else float(used_str)
-                self._attr_native_value = used_percent
-                self._attr_extra_state_attributes = {
-                    "status": "OK" if vmail_status.get("type") == "info" else "Error",
-                    "disk": vmail_status.get("disk"),
-                    "used": vmail_status.get("used"),
-                    "total": vmail_status.get("total"),
-                    "type": vmail_status.get("type")
-                }
-            else:
-                self._attr_native_value = None
-                self._attr_extra_state_attributes = {}
-        except Exception as e:
-            _LOGGER.error(f"Error getting vmail status: {e}")
-            self._attr_native_value = None
-            self._attr_extra_state_attributes = {}
+    @property
+    def native_value(self):
+        vmail_status = self.coordinator.data.get("vmail_status") or {}
+        used_str = vmail_status.get("used_percent", "0")
+        return float(used_str.rstrip('%')) if used_str.endswith('%') else float(used_str)
 
+    @property
+    def extra_state_attributes(self):
+        status = self.coordinator.data.get("vmail_status") or {}
+        return {
+            "status": status.get("type"),
+            "disk": status.get("disk"),
+            "used": status.get("used"),
+            "total": status.get("total")
+        }
 
-class MailcowContainersStatusSensor(MailcowSensor):
-    def __init__(self, api, base_url, entry_id, disable_check_at_night):
-        super().__init__(api, base_url, entry_id, disable_check_at_night)
+class MailcowContainersStatusSensor(CoordinatorEntity, SensorEntity):
+    def __init__(self, coordinator):
+        super().__init__(coordinator)
+        self._base_url = coordinator._base_url
+        self._entry_id = coordinator.entry_id
         self._attr_name = "Mailcow Containers Status"
         self._attr_unique_id = f"mailcow_containers_status_{sanitize_url(self._base_url)}_{self._entry_id}"
         self._attr_icon = "mdi:docker"
         self._attr_state_class = None
+        self._attr_device_class = None
 
-    async def async_update(self) -> None:
-        try:
-            if self._disable_check_at_night and is_night_time():
-                _LOGGER.debug("Skipping containers status update due to disabled night check.")
-                return
-            containers_status = await self.api.get_status_containers()
-            if containers_status:
-                all_running = all(c["state"] == "running" for c in containers_status.values())
-                self._attr_native_value = "All Running" if all_running else "Issues Detected"
-                self._attr_extra_state_attributes = {
-                    name: {
-                        "state": c["state"],
-                        "started_at": c["started_at"],
-                        "image": c["image"]
-                    } for name, c in containers_status.items()
-                }
-            else:
-                self._attr_native_value = "Unknown"
-                self._attr_extra_state_attributes = {}
-        except Exception as e:
-            _LOGGER.error(f"Error getting containers status: {e}")
-            self._attr_native_value = "Error"
-            self._attr_extra_state_attributes = {}
+    @property
+    def native_value(self):
+        containers = self.coordinator.data.get("containers_status") or {}
+        return "All Running" if all(c.get("state") == "running" for c in containers.values()) else "Issues Detected"
 
+    @property
+    def extra_state_attributes(self):
+        return self.coordinator.data.get("containers_status", {})
 
-class MailcowUpdateAvailableSensor(MailcowSensor):
-    def __init__(self, api, base_url, entry_id, disable_check_at_night, forced_version: str = None):
-        super().__init__(api, base_url, entry_id, disable_check_at_night)
+class MailcowUpdateAvailableSensor(CoordinatorEntity, SensorEntity):
+    def __init__(self, coordinator):
+        super().__init__(coordinator)
+        self._base_url = coordinator._base_url
+        self._entry_id = coordinator.entry_id
         self._attr_name = "Mailcow Update Available"
         self._attr_unique_id = f"mailcow_update_available_{sanitize_url(self._base_url)}_{self._entry_id}"
         self._attr_icon = "mdi:package-up"
         self._attr_state_class = None
-        self._forced_version = forced_version
+        self._attr_device_class = None
 
-    async def fetch_latest_github_version(self):
-        github_url = "https://api.github.com/repos/mailcow/mailcow-dockerized/tags"
-        retries = 3
-        delay = 5
-        for attempt in range(retries):
-            try:
-                async with aiohttp.ClientSession() as session:
-                    async with session.get(github_url) as response:
-                        if response.status == 200:
-                            tags = await response.json()
-                            if tags:
-                                sorted_tags = sorted(tags, key=lambda x: x["name"], reverse=True)
-                                return sorted_tags[0]["name"]
-            except Exception as e:
-                _LOGGER.error(f"Error fetching GitHub version (attempt {attempt + 1}/{retries}): {e}")
-                if attempt < retries - 1:
-                    await asyncio.sleep(delay)
-        return "unknown"
+    @property
+    def native_value(self):
+        current = self.coordinator.data.get("version")
+        latest = self.coordinator.data.get("latest_version")
+        if not current or not latest:
+            return None
+        return "Update available" if latest != current else "Up to date"
 
-    async def async_update(self) -> None:
-        try:
-            if self._disable_check_at_night and is_night_time():
-                _LOGGER.debug("Skipping update availability check due to disabled night check.")
-                return
-
-            current_version = await self.api.get_status_version()
-
-            if self._forced_version:
-                latest_version = self._forced_version
-            else:
-                latest_version = self._get_cached_data("latest_version")
-                if not latest_version:
-                    latest_version = await self.fetch_latest_github_version()
-                    self._set_cache_data("latest_version", latest_version)
-
-            update_available = (
-                latest_version != current_version
-                if current_version and latest_version else "Unavailable"
-            )
-
-            self._attr_native_value = "Update available" if update_available else "Up to date"
-            self._attr_icon = "mdi:package-up" if update_available else "mdi:package-check"
-            self._attr_extra_state_attributes = {
-                "installed_version": current_version or "unknown",
-                "latest_version": latest_version or "unknown",
-                "release_url": "https://github.com/mailcow/mailcow-dockerized/releases"
-            }
-
-        except Exception as e:
-            _LOGGER.exception(f"Error checking update availability: {e}")
-            self._attr_native_value = None
-            self._attr_extra_state_attributes = {}
+    @property
+    def extra_state_attributes(self):
+        return {
+            "installed_version": self.coordinator.data.get("version", "unknown"),
+            "latest_version": self.coordinator.data.get("latest_version", "unknown"),
+            "release_url": "https://github.com/mailcow/mailcow-dockerized/releases"
+        }
