@@ -12,8 +12,8 @@ Cette intégration personnalisée permet de connecter votre serveur Mailcow à H
 - **Vérification MAJ Mailcow** : Indique si une nouvelle version de votre installation Mailcow est disponible.
 - **État du service Vmail** : Surveille l'utilisation du disque pour le service de messagerie virtuelle (Vmail).
 - **Statut des conteneurs** : Fournit un aperçu de l'état de tous les conteneurs Docker associés à Mailcow.
-- **Système de cache intelligent** 🧠 : Toutes les données des capteurs sont désormais mises en cache localement pendant 12 heures pour réduire la charge sur l’API Mailcow et améliorer les performances de Home Assistant (Sauf Container Docker -> 10 mins).
 - **Activer ou désactiver la vérification des entités** : Permet d’activer ou de désactiver la vérification des entités (23h00-05h00; non modifiable).
+- **Modification de l'intervalle de la vérification des API** : Offre la possibilité de personnaliser l'intervalle de temps entre chaque vérification des API, afin d'optimiser les performances selon vos besoins.
 
 ## Installation
 
