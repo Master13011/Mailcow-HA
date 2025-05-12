@@ -13,7 +13,7 @@ Cette intégration personnalisée permet de connecter votre serveur Mailcow à H
 - **État du service Vmail** : Surveille l'utilisation du disque pour le service de messagerie virtuelle (Vmail).
 - **Statut des conteneurs** : Fournit un aperçu de l'état de tous les conteneurs Docker associés à Mailcow.
 - **Activer ou désactiver la vérification des entités** : Permet d’activer ou de désactiver la vérification des entités (23h00-05h00; non modifiable).
-- **Modification de l'intervalle de la vérification des API** : Offre la possibilité de personnaliser l'intervalle de temps entre chaque vérification des API, afin d'optimiser les performances selon vos besoins.
+- **Modification de l'intervalle de la vérification des API** : Offre la possibilité de personnaliser l'intervalle de temps entre chaque vérification des API, afin d'optimiser les performances selon vos besoins (Minutes).
 
 ## Installation
 
