@@ -6,12 +6,14 @@
         "data": {
           "base_url": "Mailcow Base URL (EX. https://mail.domainmailcow.com)",
           "api_key": "API Key",
-          "disable_check_at_night": "Disable update checks between 11:00 PM and 5:00 AM"
+          "disable_check_at_night": "Disable update checks between 11:00 PM and 5:00 AM",
+          "scan_interval": "Scan interval (in minutes)"
         },
         "data_description": {
           "base_url": "The base URL of your Mailcow installation",
           "api_key": "The API key for your Mailcow installation",
-          "disable_check_at_night": "Skipping 23h00-05H00 entities due to disabled night check"
+          "disable_check_at_night": "Skipping 23h00-05H00 entities due to disabled night check",
+          "scan_interval": "How often Mailcow entities are checked (in minutes)"
         }
       }
     },
@@ -25,10 +27,12 @@
       "init": {
         "title": "Mailcow Options",
         "data": {
-          "disable_check_at_night": "Disable update checks between 11:00 PM and 5:00 AM"
+          "disable_check_at_night": "Disable update checks between 11:00 PM and 5:00 AM",
+          "scan_interval": "Scan interval (in minutes)"
         },
         "data_description": {
-          "disable_check_at_night": "Disable the check of entities during the night (11:00 PM to 5:00 AM)"
+          "disable_check_at_night": "Disable the check of entities during the night (11:00 PM to 5:00 AM)",
+          "scan_interval": "How often Mailcow entities are checked (in minutes)"
         }
       }
     }
