@@ -51,7 +51,7 @@ class MailcowCoordinator(DataUpdateCoordinator):
     async def _async_update_data(self):
         if self.disable_check_at_night and is_night_time():
             _LOGGER.debug("Night check disabled; skipping data update.")
-            return {}
+            return self.data or {}
         try:
             version = await self.api.get_status_version()
             mailbox_count = await self.api.get_mailbox_count()
