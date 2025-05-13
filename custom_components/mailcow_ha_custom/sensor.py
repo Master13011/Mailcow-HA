@@ -1,15 +1,9 @@
-# sensor.py
 import logging
-import aiohttp
 from datetime import datetime, timedelta
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed, CoordinatorEntity
-from homeassistant.config_entries import ConfigEntry
 from homeassistant.components.sensor import SensorEntity, SensorStateClass
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .api import MailcowAPI
-from .const import DOMAIN, CONF_DISABLE_CHECK_AT_NIGHT, CONF_SCAN_INTERVAL
+from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -21,7 +15,7 @@ def is_night_time() -> bool:
     return now >= 23 or now < 5
 
 class MailcowCoordinator(DataUpdateCoordinator):
-    def __init__(self, hass, api: MailcowAPI, scan_interval: int, disable_check_at_night: bool, entry_id: str, base_url: str):
+    def __init__(self, hass, api, scan_interval: int, disable_check_at_night: bool, entry_id: str, base_url: str):
         super().__init__(
             hass,
             _LOGGER,
@@ -35,6 +29,7 @@ class MailcowCoordinator(DataUpdateCoordinator):
         self._cached_latest_version = None
 
     async def fetch_latest_github_version(self):
+        import aiohttp
         github_url = "https://api.github.com/repos/mailcow/mailcow-dockerized/tags"
         try:
             async with aiohttp.ClientSession() as session:
@@ -73,26 +68,6 @@ class MailcowCoordinator(DataUpdateCoordinator):
         except Exception as err:
             raise UpdateFailed(f"Error fetching data: {err}")
 
-async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities: AddEntitiesCallback) -> None:
-    base_url = config_entry.data["base_url"]
-    api = hass.data[DOMAIN][config_entry.entry_id]
-    disable_check_at_night = config_entry.options.get(CONF_DISABLE_CHECK_AT_NIGHT, False)
-    scan_interval = config_entry.options.get(CONF_SCAN_INTERVAL, 10)
-
-    coordinator = MailcowCoordinator(hass, api, scan_interval, disable_check_at_night, config_entry.entry_id, base_url)
-    await coordinator.async_config_entry_first_refresh()
-
-    sensors = [
-        MailcowVersionSensor(coordinator),
-        MailcowMailboxCountSensor(coordinator),
-        MailcowDomainCountSensor(coordinator),
-        MailcowVmailStatusSensor(coordinator),
-        MailcowContainersStatusSensor(coordinator),
-        MailcowUpdateAvailableSensor(coordinator),
-    ]
-
-    async_add_entities(sensors, True)
-
 class MailcowSensor(CoordinatorEntity, SensorEntity):
     def __init__(self, coordinator, name: str, key: str, icon: str):
         super().__init__(coordinator)
@@ -102,7 +77,7 @@ class MailcowSensor(CoordinatorEntity, SensorEntity):
         self._base_url = coordinator._base_url
         self._entry_id = coordinator.entry_id
         self._attr_unique_id = f"mailcow_{key}_{sanitize_url(self._base_url)}_{self._entry_id}"
-        self._attr_state_class = SensorStateClass.MEASUREMENT
+        self._attr_state_class = None
 
     @property
     def native_value(self):
@@ -119,16 +94,10 @@ class MailcowMailboxCountSensor(MailcowSensor):
 class MailcowVersionSensor(MailcowSensor):
     def __init__(self, coordinator):
         super().__init__(coordinator, "Mailcow Version", "version", "mdi:package-variant")
-        self._attr_state_class = None
 
-class MailcowVmailStatusSensor(CoordinatorEntity, SensorEntity):
+class MailcowVmailStatusSensor(MailcowSensor):
     def __init__(self, coordinator):
-        super().__init__(coordinator)
-        self._base_url = coordinator._base_url
-        self._entry_id = coordinator.entry_id
-        self._attr_name = "Mailcow Vmail Disk Usage"
-        self._attr_unique_id = f"mailcow_vmail_disk_usage_{sanitize_url(self._base_url)}_{self._entry_id}"
-        self._attr_icon = "mdi:harddisk"
+        super().__init__(coordinator, "Mailcow Vmail Status", "vmail_status", "mdi:harddisk")
         self._attr_native_unit_of_measurement = "%"
         self._attr_state_class = SensorStateClass.MEASUREMENT
 
@@ -147,18 +116,11 @@ class MailcowVmailStatusSensor(CoordinatorEntity, SensorEntity):
             "used": status.get("used"),
             "total": status.get("total")
         }
-
-class MailcowContainersStatusSensor(CoordinatorEntity, SensorEntity):
+        
+class MailcowContainersStatusSensor(MailcowSensor):
     def __init__(self, coordinator):
-        super().__init__(coordinator)
-        self._base_url = coordinator._base_url
-        self._entry_id = coordinator.entry_id
-        self._attr_name = "Mailcow Containers Status"
-        self._attr_unique_id = f"mailcow_containers_status_{sanitize_url(self._base_url)}_{self._entry_id}"
-        self._attr_icon = "mdi:docker"
-        self._attr_state_class = None
+        super().__init__(coordinator, "Mailcow Containers Status", "containers_status", "mdi:docker")
         self._attr_device_class = None
-
     @property
     def native_value(self):
         containers = self.coordinator.data.get("containers_status") or {}
@@ -168,29 +130,13 @@ class MailcowContainersStatusSensor(CoordinatorEntity, SensorEntity):
     def extra_state_attributes(self):
         return self.coordinator.data.get("containers_status", {})
 
-class MailcowUpdateAvailableSensor(CoordinatorEntity, SensorEntity):
-    def __init__(self, coordinator):
-        super().__init__(coordinator)
-        self._base_url = coordinator._base_url
-        self._entry_id = coordinator.entry_id
-        self._attr_name = "Mailcow Update Available"
-        self._attr_unique_id = f"mailcow_update_available_{sanitize_url(self._base_url)}_{self._entry_id}"
-        self._attr_icon = "mdi:package-up"
-        self._attr_state_class = None
-        self._attr_device_class = None
-
-    @property
-    def native_value(self):
-        current = self.coordinator.data.get("version")
-        latest = self.coordinator.data.get("latest_version")
-        if not current or not latest:
-            return None
-        return "Update available" if latest != current else "Up to date"
-
-    @property
-    def extra_state_attributes(self):
-        return {
-            "installed_version": self.coordinator.data.get("version", "unknown"),
-            "latest_version": self.coordinator.data.get("latest_version", "unknown"),
-            "release_url": "https://github.com/mailcow/mailcow-dockerized/releases"
-        }
+async def async_setup_entry(hass, config_entry, async_add_entities):
+    coordinator = hass.data[DOMAIN][config_entry.entry_id]
+    sensors = [
+        MailcowVersionSensor(coordinator),
+        MailcowMailboxCountSensor(coordinator),
+        MailcowDomainCountSensor(coordinator),
+        MailcowVmailStatusSensor(coordinator),
+        MailcowContainersStatusSensor(coordinator),
+    ]
+    async_add_entities(sensors, True)
