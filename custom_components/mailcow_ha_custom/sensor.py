@@ -90,7 +90,7 @@ class MailcowSensor(CoordinatorEntity, SensorEntity):
             "name": "Mailcow",
             "manufacturer": "Mailcow",
             "model": "API",
-            "sw_version": self.coordinator.data.get("mailcow_version", "Unknown"),
+            "sw_version": self.coordinator.data.get("version", "unknown"),
         }
 
 class MailcowDomainCountSensor(MailcowSensor):
