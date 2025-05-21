@@ -38,17 +38,7 @@ class MailcowUpdateEntity(CoordinatorEntity, UpdateEntity):
             "latest_version": self.coordinator.data.get("latest_version", "unknown"),
             "release_url": "https://github.com/mailcow/mailcow-dockerized/releases"
         }
-
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, self._entry_id)},
-            "name": "Mailcow HA",
-            "manufacturer": "Master13011",
-            "model": "API",
-            "sw_version": self.coordinator.data.get("version", "unknown"),
-        }
-        
+   
     @property
     def device_info(self):
         return {
