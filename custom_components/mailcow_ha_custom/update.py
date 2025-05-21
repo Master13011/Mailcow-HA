@@ -13,6 +13,7 @@ class MailcowUpdateEntity(CoordinatorEntity, UpdateEntity):
         self._attr_name = "Mailcow Update"
         self._attr_unique_id = f"mailcow_update_{sanitize_url(getattr(coordinator, '_base_url', ''))}_{getattr(coordinator, 'entry_id', '')}"
         self._attr_device_class = "update"
+        self._entry_id = getattr(coordinator, "entry_id", None) 
 
     @property
     def installed_version(self):
