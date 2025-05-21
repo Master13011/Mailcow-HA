@@ -87,8 +87,8 @@ class MailcowSensor(CoordinatorEntity, SensorEntity):
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, self._entry_id)},
-            "name": "Mailcow",
-            "manufacturer": "Mailcow",
+            "name": "Mailcow HA",
+            "manufacturer": "Master13011",
             "model": "API",
             "sw_version": self.coordinator.data.get("version", "unknown"),
         }
