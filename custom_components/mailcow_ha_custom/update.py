@@ -1,5 +1,6 @@
 from homeassistant.components.update import UpdateEntity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
+from homeassistant.const import EntityCategory
 from .const import DOMAIN
 
 def sanitize_url(url: str) -> str:
@@ -13,6 +14,7 @@ class MailcowUpdateEntity(CoordinatorEntity, UpdateEntity):
         self._attr_name = "Mailcow Update"
         self._attr_unique_id = f"mailcow_update_{sanitize_url(getattr(coordinator, '_base_url', ''))}_{getattr(coordinator, 'entry_id', '')}"
         self._attr_device_class = "update"
+        self._attr_entity_category = EntityCategory.CONFIG
         self._entry_id = getattr(coordinator, "entry_id", None) 
 
     @property
