@@ -83,6 +83,16 @@ class MailcowSensor(CoordinatorEntity, SensorEntity):
     def native_value(self):
         return self.coordinator.data.get(self._key)
 
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, self._entry_id)},
+            "name": "Mailcow",
+            "manufacturer": "Mailcow",
+            "model": "API",
+            "sw_version": self.coordinator.data.get("mailcow_version", "Unknown"),
+        }
+
 class MailcowDomainCountSensor(MailcowSensor):
     def __init__(self, coordinator):
         super().__init__(coordinator, "Mailcow Domain Count", "domain_count", "mdi:domain")
