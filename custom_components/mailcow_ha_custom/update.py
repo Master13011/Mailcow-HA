@@ -38,6 +38,16 @@ class MailcowUpdateEntity(CoordinatorEntity, UpdateEntity):
             "release_url": "https://github.com/mailcow/mailcow-dockerized/releases"
         }
 
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, self._entry_id)},
+            "name": "Mailcow HA",
+            "manufacturer": "Master13011",
+            "model": "API",
+            "sw_version": self.coordinator.data.get("version", "unknown"),
+        }
+    
     async def async_install(self, version, backup, **kwargs):
         # Implémente ici la logique d'installation de la mise à jour Mailcow si tu veux
         pass
