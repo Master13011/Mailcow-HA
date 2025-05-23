@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime, timedelta
+from urllib.parse import urlparse
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed, CoordinatorEntity
 from homeassistant.components.sensor import SensorEntity, SensorStateClass
 
@@ -90,6 +91,7 @@ class MailcowSensor(CoordinatorEntity, SensorEntity):
             "name": "Mailcow HA",
             "manufacturer": "Master13011",
             "model": "API",
+            "name": urlparse(self._base_url).netloc,
             "sw_version": self.coordinator.data.get("version", "unknown"),
         }
 
