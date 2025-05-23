@@ -1,6 +1,7 @@
 from homeassistant.components.update import UpdateEntity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.const import EntityCategory
+from urllib.parse import urlparse
 from .const import DOMAIN
 
 def sanitize_url(url: str) -> str:
@@ -48,6 +49,7 @@ class MailcowUpdateEntity(CoordinatorEntity, UpdateEntity):
             "name": "Mailcow HA",
             "manufacturer": "Master13011",
             "model": "API",
+            "name": urlparse(self._base_url).netloc,
             "sw_version": self.coordinator.data.get("version", "unknown"),
         } 
     async def async_install(self, version, backup, **kwargs):
