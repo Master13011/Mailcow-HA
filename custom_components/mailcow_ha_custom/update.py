@@ -48,6 +48,7 @@ class MailcowUpdateEntity(CoordinatorEntity, UpdateEntity):
             "name": "Mailcow HA",
             "manufacturer": "Master13011",
             "model": "API",
+            "sw_version": self.coordinator.data.get("version", "unknown"),
         } 
     async def async_install(self, version, backup, **kwargs):
         # Implémente ici la logique d'installation de la mise à jour Mailcow si tu veux
