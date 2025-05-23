@@ -88,7 +88,6 @@ class MailcowSensor(CoordinatorEntity, SensorEntity):
     def device_info(self):
         return {
             "identifiers": {(DOMAIN, self._entry_id)},
-            "name": "Mailcow HA",
             "manufacturer": "Master13011",
             "model": "API",
             "name": urlparse(self._base_url).netloc,
