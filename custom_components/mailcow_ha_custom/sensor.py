@@ -75,12 +75,17 @@ class MailcowContainersStatusSensor(MailcowSensor):
 
     @property
     def native_value(self):
-        containers = self.coordinator.data.get("containers_status") or []
-        return "All Running" if all(c.get("state") == "running" for c in containers) else "Issues Detected"
+        containers = self.coordinator.data.get("containers_status")
+        if isinstance(containers, list) and all(isinstance(c, dict) for c in containers):
+            if not containers:
+                return "No Data"
+            return "All Running" if all(c.get("state") == "running" for c in containers) else "Issues Detected"
+        return "Unknown"
 
     @property
     def extra_state_attributes(self):
-        return self.coordinator.data.get("containers_status", {})
+        containers = self.coordinator.data.get("containers_status")
+        return containers if isinstance(containers, (list, dict)) else {}
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
