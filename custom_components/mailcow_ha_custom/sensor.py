@@ -9,15 +9,19 @@ _LOGGER = logging.getLogger(__name__)
 def sanitize_url(url: str) -> str:
     return ''.join(filter(str.isalnum, url))
 
+def extract_domain(url: str) -> str:
+    return urlparse(url).netloc.replace('.', '_')
+
 class MailcowSensor(CoordinatorEntity, SensorEntity):
     def __init__(self, coordinator, name: str, key: str, icon: str):
         super().__init__(coordinator)
-        self._attr_name = name
+        domain = extract_domain(coordinator._base_url)
+        self._attr_name = f"{domain}_mailcow_{key}"
         self._attr_icon = icon
         self._key = key
         self._base_url = coordinator._base_url
         self._entry_id = coordinator.entry_id
-        self._attr_unique_id = f"mailcow_{key}_{sanitize_url(self._base_url)}_{self._entry_id}"
+        self._attr_unique_id = f"mailcow_{key}_{domain}_{self._entry_id}"
         self._attr_state_class = None
 
     @property
