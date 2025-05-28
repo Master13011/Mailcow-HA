@@ -3,6 +3,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.core import callback
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import (
     DOMAIN,
@@ -11,6 +12,7 @@ from .const import (
     CONF_DISABLE_CHECK_AT_NIGHT,
     CONF_SCAN_INTERVAL,
 )
+
 from .api import MailcowAPI
 
 _LOGGER = logging.getLogger(__name__)
@@ -18,10 +20,8 @@ _LOGGER = logging.getLogger(__name__)
 class CannotConnect(HomeAssistantError):
     """Error to indicate we cannot connect."""
 
-
 class AuthenticationError(HomeAssistantError):
     """Error to indicate authentication failure."""
-
 
 class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Mailcow."""
@@ -34,7 +34,6 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             try:
                 await self._validate_input(user_input)
-                # Sépare les données de base et les options
                 return self.async_create_entry(
                     title="Mailcow",
                     data={
@@ -69,36 +68,31 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def _validate_input(self, user_input):
         """Validate the user input."""
-        try:
-            api = MailcowAPI(user_input[CONF_BASE_URL], user_input[CONF_API_KEY], self.hass)
-            await self.hass.async_add_executor_job(api.get_status_version)
-        except Exception as err:
-            _LOGGER.error(f"Error during validation: {err}")
-            # Si c'est une erreur d'authentification (exemple 403)
-            if hasattr(err, "response") and err.response is not None and getattr(err.response, "status_code", None) == 403:
-                raise AuthenticationError from err
-            raise CannotConnect from err
+        session = async_get_clientsession(self.hass)
+        api = MailcowAPI(user_input, session)
+        version = await api.get_status_version()
+        if not version:
+            raise CannotConnect
 
     @staticmethod
     @callback
     def async_get_options_flow(config_entry):
-        return MailcowOptionsFlowHandler()
-
+        return MailcowOptionsFlowHandler(config_entry)
 
 class MailcowOptionsFlowHandler(config_entries.OptionsFlow):
     """Handle options flow for Mailcow."""
 
+    def __init__(self, config_entry):
+        self.config_entry = config_entry
+
     async def async_step_init(self, user_input=None):
         """Manage the options."""
         if user_input is not None:
-            await self._apply_options(user_input)
-            await self.hass.config_entries.async_reload(self.config_entry.entry_id)
             return self.async_create_entry(title="", data=user_input)
 
-        # Utilisation de self.config_entry pour obtenir les options existantes
-        disable_check_at_night = self.config_entry.options.get("disable_check_at_night", False)
+        disable_check_at_night = self.config_entry.options.get(CONF_DISABLE_CHECK_AT_NIGHT, False)
         scan_interval = self.config_entry.options.get(CONF_SCAN_INTERVAL, 10)
-        
+
         data_schema = vol.Schema({
             vol.Optional(CONF_DISABLE_CHECK_AT_NIGHT, default=disable_check_at_night): bool,
             vol.Optional(CONF_SCAN_INTERVAL, default=scan_interval): int,
@@ -108,15 +102,3 @@ class MailcowOptionsFlowHandler(config_entries.OptionsFlow):
             step_id="init",
             data_schema=data_schema,
         )
-
-    async def _apply_options(self, user_input):
-        """Apply options after modification."""
-        # Les options à appliquer
-        options = {
-            CONF_DISABLE_CHECK_AT_NIGHT: user_input.get(CONF_DISABLE_CHECK_AT_NIGHT, False),
-            CONF_SCAN_INTERVAL: user_input.get(CONF_SCAN_INTERVAL, 10),
-        }
-
-        # Mise à jour des options via self.config_entry
-        if self.config_entry:
-            self.hass.config_entries.async_update_entry(self.config_entry, options=options)
