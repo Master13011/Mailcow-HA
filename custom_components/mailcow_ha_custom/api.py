@@ -1,6 +1,3 @@
-"""API client for Mailcow."""
-# api.py
-
 import logging
 from aiohttp import ClientSession, ClientError
 from .const import CONF_API_KEY, CONF_BASE_URL
@@ -10,17 +7,17 @@ _LOGGER = logging.getLogger(__name__)
 class MailcowAPI:
     """Asynchronous Mailcow API client."""
 
-    def __init__(self, config_data: dict, session: ClientSession):
+    def __init__(self, config_data: dict, session: ClientSession) -> None:
         self._base_url = config_data[CONF_BASE_URL].rstrip("/")
         self._api_key = config_data[CONF_API_KEY]
         self._session = session
 
-    async def _get(self, endpoint: str):
+    async def _get(self, endpoint: str) -> dict | list | None:
         """Generic GET request to Mailcow API."""
         url = f"{self._base_url}/api/v1/get/{endpoint}"
         headers = {"X-API-Key": self._api_key}
         try:
-            async with self._session.get(url, headers=headers) as response:
+            async with self._session.get(url, headers=headers, timeout=10) as response:
                 response.raise_for_status()
                 return await response.json()
         except ClientError as err:
