@@ -9,9 +9,6 @@ _LOGGER = logging.getLogger(__name__)
 def sanitize_url(url: str) -> str:
     return ''.join(filter(str.isalnum, url))
 
-def extract_domain(url: str) -> str:
-    return urlparse(url).netloc.replace('.', '_')
-
 class MailcowSensor(CoordinatorEntity, SensorEntity):
     def __init__(self, coordinator, name: str, key: str, icon: str):
         super().__init__(coordinator)
