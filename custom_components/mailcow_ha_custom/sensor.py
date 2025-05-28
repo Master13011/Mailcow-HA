@@ -76,10 +76,16 @@ class MailcowContainersStatusSensor(MailcowSensor):
     @property
     def native_value(self):
         containers = self.coordinator.data.get("containers_status")
+        # Si containers est une liste de dicts
         if isinstance(containers, list) and all(isinstance(c, dict) for c in containers):
             if not containers:
                 return "No Data"
             return "All Running" if all(c.get("state") == "running" for c in containers) else "Issues Detected"
+        # Si containers est un dict (pour compatibilité descendante)
+        if isinstance(containers, dict):
+            if not containers:
+                return "No Data"
+            return "All Running" if all(c.get("state") == "running" for c in containers.values()) else "Issues Detected"
         return "Unknown"
 
     @property
