@@ -9,7 +9,7 @@ def is_night_time() -> bool:
     return now >= 23 or now < 5
 
 class MailcowCoordinator(DataUpdateCoordinator):
-    def __init__(self, hass, api, scan_interval: int, disable_check_at_night: bool, entry_id: str, base_url: str):
+    def __init__(self, hass, api, scan_interval: int, disable_check_at_night: bool, entry_id: str, base_url: str, session):
         super().__init__(
             hass,
             _LOGGER,
@@ -21,6 +21,7 @@ class MailcowCoordinator(DataUpdateCoordinator):
         self.entry_id = entry_id
         self._base_url = base_url
         self._cached_latest_version = None
+        self._session = session
 
     async def _fetch_latest_github_version(self):
         import aiohttp
