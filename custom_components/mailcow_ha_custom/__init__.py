@@ -26,7 +26,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         entry.options.get(CONF_SCAN_INTERVAL, 10),
         entry.options.get(CONF_DISABLE_CHECK_AT_NIGHT, False),
         entry.entry_id,
-        entry.data.get(CONF_BASE_URL)
+        entry.data.get(CONF_BASE_URL),
+        session
     )
     await coordinator.async_config_entry_first_refresh()
 
