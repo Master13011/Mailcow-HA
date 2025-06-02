@@ -49,7 +49,7 @@ class MailcowCoordinator(DataUpdateCoordinator):
             containers_status = await self.api.get_status_containers()
 
             if not self._cached_latest_version:
-                self._cached_latest_version = await self.fetch_latest_github_version()
+                self._cached_latest_version = await self._fetch_latest_github_version()
 
             return {
                 "version": version,
