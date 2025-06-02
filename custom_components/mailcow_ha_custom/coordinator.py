@@ -1,11 +1,10 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 import logging
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 _LOGGER = logging.getLogger(__name__)
 
 def is_night_time() -> bool:
-    from datetime import datetime
     now = datetime.now().hour
     return now >= 23 or now < 5
 
