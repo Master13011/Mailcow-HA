@@ -22,7 +22,7 @@ class MailcowCoordinator(DataUpdateCoordinator):
         self._base_url = base_url
         self._cached_latest_version = None
 
-    async def fetch_latest_github_version(self):
+    async def _fetch_latest_github_version(self):
         import aiohttp
         github_url = "https://api.github.com/repos/mailcow/mailcow-dockerized/tags"
         try:
