@@ -1,5 +1,6 @@
 import logging
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.config import ConfigType
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
@@ -9,7 +10,7 @@ from .api import MailcowAPI
 
 _LOGGER = logging.getLogger(__name__)
 
-async def async_setup(hass: HomeAssistant, config: dict):
+async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the Mailcow component."""
     hass.data.setdefault(DOMAIN, {})
     return True
@@ -22,10 +23,10 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator = MailcowCoordinator(
         hass,
         api,
-        entry.options.get("scan_interval", 10),
-        entry.options.get("disable_check_at_night", False),
+        entry.options.get(CONF_SCAN_INTERVAL, 10),
+        entry.options.get(CONF_DISABLE_CHECK_AT_NIGHT, False),
         entry.entry_id,
-        entry.data["base_url"]
+        entry.data.get(CONF_BASE_URL)
     )
     await coordinator.async_config_entry_first_refresh()
 
