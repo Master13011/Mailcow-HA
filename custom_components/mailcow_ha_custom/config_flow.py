@@ -83,15 +83,17 @@ class MailcowOptionsFlowHandler(config_entries.OptionsFlow):
     """Handle options flow for Mailcow."""
 
     def __init__(self, config_entry):
-        self.config_entry = config_entry
+        super().__init__()
+        self._entry_id = config_entry.entry_id
 
     async def async_step_init(self, user_input=None):
         """Manage the options."""
         if user_input is not None:
             return self.async_create_entry(title="", data=user_input)
 
-        disable_check_at_night = self.config_entry.options.get(CONF_DISABLE_CHECK_AT_NIGHT, False)
-        scan_interval = self.config_entry.options.get(CONF_SCAN_INTERVAL, 10)
+        entry = self.hass.config_entries.async_get_entry(self._entry_id)
+        disable_check_at_night = entry.options.get(CONF_DISABLE_CHECK_AT_NIGHT, False)
+        scan_interval = entry.options.get(CONF_SCAN_INTERVAL, 10)
 
         data_schema = vol.Schema({
             vol.Optional(CONF_DISABLE_CHECK_AT_NIGHT, default=disable_check_at_night): bool,
