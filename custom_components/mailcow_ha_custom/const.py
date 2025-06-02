@@ -7,6 +7,3 @@ CONF_DISABLE_CHECK_AT_NIGHT = "disable_check_at_night"
 CONF_SCAN_INTERVAL = "scan_interval"
 
 PLATFORMS = ["sensor", "update"]
-
-DEFAULT_SCAN_INTERVAL = 10
-DEFAULT_DISABLE_NIGHT = False
