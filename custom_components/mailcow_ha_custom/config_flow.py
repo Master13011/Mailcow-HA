@@ -93,6 +93,7 @@ class MailcowOptionsFlowHandler(config_entries.OptionsFlow):
     """Handle options flow for Mailcow."""
 
     def __init__(self, config_entry):
+        super().__init__()
         self._entry_id = config_entry.entry_id
 
     async def async_step_init(self, user_input=None):
@@ -105,44 +106,61 @@ class MailcowOptionsFlowHandler(config_entries.OptionsFlow):
         night_end_hour = entry.options.get(CONF_NIGHT_END_HOUR, 5)
 
         if user_input is not None:
-            # Si la valeur disable_check_at_night a changé, on recharge le formulaire
-            if "disable_check_at_night" in user_input and user_input["disable_check_at_night"] != disable_check_at_night:
-                disable_check_at_night = user_input["disable_check_at_night"]
-                # Afficher à nouveau le formulaire avec la nouvelle option
-                data_schema = self._get_data_schema(disable_check_at_night, scan_interval, night_start_hour, night_end_hour)
+            new_disable_check_at_night = user_input.get(CONF_DISABLE_CHECK_AT_NIGHT, False)
+
+            # Si l'utilisateur vient de changer la case, on recharge le formulaire sans valider
+            if "disable_check_at_night" in user_input and new_disable_check_at_night != disable_check_at_night:
+                data_schema = self._get_data_schema(
+                    new_disable_check_at_night,
+                    user_input.get(CONF_SCAN_INTERVAL, scan_interval),
+                    user_input.get(CONF_NIGHT_START_HOUR, night_start_hour),
+                    user_input.get(CONF_NIGHT_END_HOUR, night_end_hour),
+                )
                 return self.async_show_form(
                     step_id="init",
                     data_schema=data_schema,
-                    errors=errors,
+                    errors={},  # On efface toute erreur précédente
                 )
 
-            # Validation manuelle si désactivation activée
-            if user_input.get(CONF_DISABLE_CHECK_AT_NIGHT):
+            # Validation conditionnelle : seulement si activé
+            if new_disable_check_at_night:
                 start = user_input.get(CONF_NIGHT_START_HOUR)
                 end = user_input.get(CONF_NIGHT_END_HOUR)
                 if start is None or end is None:
                     errors["base"] = "night_hours_required"
+                elif not (0 <= start <= 23) or not (0 <= end <= 23):
+                    errors["base"] = "invalid_night_hours"
 
-            if errors:
-                data_schema = self._get_data_schema(user_input.get(CONF_DISABLE_CHECK_AT_NIGHT), 
-                                                    user_input.get(CONF_SCAN_INTERVAL, scan_interval), 
-                                                    user_input.get(CONF_NIGHT_START_HOUR, night_start_hour),
-                                                    user_input.get(CONF_NIGHT_END_HOUR, night_end_hour))
-                return self.async_show_form(step_id="init", data_schema=data_schema, errors=errors)
+            # Si pas d'erreur OU si l'option est décochée, on valide !
+            if not errors:
+                return self.async_create_entry(title="", data=user_input)
 
-            return self.async_create_entry(title="", data=user_input)
+            # Sinon, on remonte le formulaire avec les erreurs
+            data_schema = self._get_data_schema(
+                new_disable_check_at_night,
+                user_input.get(CONF_SCAN_INTERVAL, scan_interval),
+                user_input.get(CONF_NIGHT_START_HOUR, night_start_hour),
+                user_input.get(CONF_NIGHT_END_HOUR, night_end_hour),
+            )
+            return self.async_show_form(
+                step_id="init",
+                data_schema=data_schema,
+                errors=errors,
+            )
 
+        # Premier affichage du formulaire
         data_schema = self._get_data_schema(disable_check_at_night, scan_interval, night_start_hour, night_end_hour)
         return self.async_show_form(step_id="init", data_schema=data_schema, errors=errors)
 
     def _get_data_schema(self, disable_check_at_night, scan_interval, night_start_hour, night_end_hour):
+        hour_validator = vol.All(vol.Coerce(int), vol.Range(min=0, max=23))
         schema_dict = {
             vol.Optional(CONF_DISABLE_CHECK_AT_NIGHT, default=disable_check_at_night): bool,
             vol.Optional(CONF_SCAN_INTERVAL, default=scan_interval): int,
         }
         if disable_check_at_night:
             schema_dict.update({
-                vol.Optional(CONF_NIGHT_START_HOUR, default=night_start_hour): cv.positive_int,
-                vol.Optional(CONF_NIGHT_END_HOUR, default=night_end_hour): cv.positive_int,
+                vol.Optional(CONF_NIGHT_START_HOUR, default=night_start_hour): hour_validator,
+                vol.Optional(CONF_NIGHT_END_HOUR, default=night_end_hour): hour_validator,
             })
         return vol.Schema(schema_dict)
