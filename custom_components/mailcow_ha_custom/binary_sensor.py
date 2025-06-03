@@ -14,7 +14,7 @@ class MailcowContainerBinarySensor(CoordinatorEntity, BinarySensorEntity):
         self._attr_unique_id = f"mailcow_container_{container_id}_{coordinator.entry_id}"
 
     @property
-    def is_on(self):
+    def is_on(self) -> bool:
         """Le conteneur est 'on' si état running."""
         containers = self.coordinator.data.get("containers_status", [])
         container = next(
