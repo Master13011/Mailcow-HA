@@ -98,7 +98,6 @@ class MailcowOptionsFlowHandler(config_entries.OptionsFlow):
 
     async def async_step_init(self, user_input=None):
         errors = {}
-    
         entry = self.hass.config_entries.async_get_entry(self._entry_id)
         initial_disable_check_at_night = entry.options.get(CONF_DISABLE_CHECK_AT_NIGHT, False)
         scan_interval = entry.options.get(CONF_SCAN_INTERVAL, 10)
@@ -108,11 +107,17 @@ class MailcowOptionsFlowHandler(config_entries.OptionsFlow):
         if user_input is not None:
             disable_check_at_night = user_input.get(CONF_DISABLE_CHECK_AT_NIGHT, False)
     
-            # Si l'utilisateur vient de changer la case, recharge le formulaire sans valider
-            if (
-                "disable_check_at_night" in user_input and
-                disable_check_at_night != initial_disable_check_at_night
-            ):
+            # Nettoyage des heures
+            if not disable_check_at_night:
+                user_input.pop(CONF_NIGHT_START_HOUR, None)
+                user_input.pop(CONF_NIGHT_END_HOUR, None)
+            else:
+                if user_input.get(CONF_NIGHT_START_HOUR) == "":
+                    user_input[CONF_NIGHT_START_HOUR] = None
+                if user_input.get(CONF_NIGHT_END_HOUR) == "":
+                    user_input[CONF_NIGHT_END_HOUR] = None
+    
+            if disable_check_at_night != initial_disable_check_at_night:
                 data_schema = self._get_data_schema(
                     disable_check_at_night,
                     user_input.get(CONF_SCAN_INTERVAL, scan_interval),
@@ -122,10 +127,9 @@ class MailcowOptionsFlowHandler(config_entries.OptionsFlow):
                 return self.async_show_form(
                     step_id="init",
                     data_schema=data_schema,
-                    errors={},  # Efface toute erreur précédente
+                    errors={},
                 )
     
-            # Validation conditionnelle : seulement si activé
             if disable_check_at_night:
                 start = user_input.get(CONF_NIGHT_START_HOUR)
                 end = user_input.get(CONF_NIGHT_END_HOUR)
@@ -134,36 +138,20 @@ class MailcowOptionsFlowHandler(config_entries.OptionsFlow):
                 elif not (0 <= start <= 23) or not (0 <= end <= 23):
                     errors["base"] = "invalid_night_hours"
     
-            # Si pas d'erreur OU si l'option est décochée, on valide !
             if not errors:
-                # Nettoyage : si l'option est décochée, on enlève les champs d'heures du dict
-                if not disable_check_at_night:
-                    user_input.pop(CONF_NIGHT_START_HOUR, None)
-                    user_input.pop(CONF_NIGHT_END_HOUR, None)
                 return self.async_create_entry(title="", data=user_input)
     
-            # Sinon, on remonte le formulaire avec les erreurs
-            data_schema = self._get_data_schema(
-                disable_check_at_night,
-                user_input.get(CONF_SCAN_INTERVAL, scan_interval),
-                user_input.get(CONF_NIGHT_START_HOUR, night_start_hour),
-                user_input.get(CONF_NIGHT_END_HOUR, night_end_hour),
-            )
-            return self.async_show_form(
-                step_id="init",
-                data_schema=data_schema,
-                errors=errors,
-            )
-    
-        # Premier affichage du formulaire
         data_schema = self._get_data_schema(
-            initial_disable_check_at_night, scan_interval, night_start_hour, night_end_hour
+            initial_disable_check_at_night,
+            scan_interval,
+            night_start_hour,
+            night_end_hour,
         )
         return self.async_show_form(step_id="init", data_schema=data_schema, errors=errors)
 
-
     def _get_data_schema(self, disable_check_at_night, scan_interval, night_start_hour, night_end_hour):
-        hour_validator = vol.All(vol.Coerce(int), vol.Range(min=0, max=23))
+        # Utilise juste vol.Coerce(int) pour un champ numérique simple (pas de slider)
+        hour_validator = vol.Coerce(int)
         schema_dict = {
             vol.Optional(CONF_DISABLE_CHECK_AT_NIGHT, default=disable_check_at_night): bool,
             vol.Optional(CONF_SCAN_INTERVAL, default=scan_interval): int,
