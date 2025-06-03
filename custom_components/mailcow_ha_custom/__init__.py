@@ -4,7 +4,7 @@ from homeassistant.config import ConfigType
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import DOMAIN, PLATFORMS, CONF_SCAN_INTERVAL, CONF_DISABLE_CHECK_AT_NIGHT, CONF_BASE_URL
+from .const import DOMAIN, PLATFORMS, CONF_SCAN_INTERVAL, CONF_DISABLE_CHECK_AT_NIGHT, CONF_BASE_URL, CONF_NIGHT_START_HOUR, CONF_NIGHT_END_HOUR
 from .coordinator import MailcowCoordinator
 from .api import MailcowAPI
 
