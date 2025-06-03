@@ -21,15 +21,15 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     api = MailcowAPI(entry.data, session)
 
     coordinator = MailcowCoordinator(
-        hass,
-        api,
-        entry.options.get(CONF_SCAN_INTERVAL, 10),
-        entry.options.get(CONF_DISABLE_CHECK_AT_NIGHT, False),
-        entry.entry_id,
-        entry.data.get(CONF_BASE_URL),
-        session=session,
+        hass=hass,
+        api=api,
+        scan_interval=entry.options.get(CONF_SCAN_INTERVAL, 10),
+        disable_check_at_night=entry.options.get(CONF_DISABLE_CHECK_AT_NIGHT, False),
         night_start_hour=entry.options.get(CONF_NIGHT_START_HOUR, 23),
         night_end_hour=entry.options.get(CONF_NIGHT_END_HOUR, 5),
+        entry_id=entry.entry_id,
+        base_url=entry.data.get(CONF_BASE_URL),
+        session=session,
     )
     await coordinator.async_config_entry_first_refresh()
 
