@@ -72,7 +72,7 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
-    async def _validate_input(self, user_input):
+    async def _validate_input(self, user_input: dict) -> None:
         """Validate the user input against the Mailcow API."""
         session = async_get_clientsession(self.hass)
         api = MailcowAPI(user_input, session)
