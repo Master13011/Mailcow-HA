@@ -4,25 +4,12 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 _LOGGER = logging.getLogger(__name__)
 
-   
-def is_night_time(now: datetime, start: int, end: int) -> bool:
-    hour = now.hour
-    return hour >= start or hour < end if start > end else start <= hour < end
-    
+def is_night_time() -> bool:
+    now = datetime.now().hour
+    return now >= 23 or now < 5
+
 class MailcowCoordinator(DataUpdateCoordinator):
-    def __init__(
-        self,
-        *,
-        hass,
-        api,
-        scan_interval: int,
-        disable_check_at_night: bool,
-        night_start_hour: int,
-        night_end_hour: int,
-        entry_id: str,
-        base_url: str,
-        session,
-    ):
+    def __init__(self, hass, api, scan_interval: int, disable_check_at_night: bool, entry_id: str, base_url: str, session):
         super().__init__(
             hass,
             _LOGGER,
@@ -35,8 +22,6 @@ class MailcowCoordinator(DataUpdateCoordinator):
         self._base_url = base_url
         self._cached_latest_version = None
         self._session = session
-        self.night_start_hour = night_start_hour
-        self.night_end_hour = night_end_hour
 
     async def _fetch_latest_github_version(self):
         import aiohttp
@@ -54,7 +39,7 @@ class MailcowCoordinator(DataUpdateCoordinator):
         return "unknown"
 
     async def _async_update_data(self):
-        if self.disable_check_at_night and is_night_time(datetime.now(), self.night_start_hour, self.night_end_hour):
+        if self.disable_check_at_night and is_night_time():
             _LOGGER.debug("Night check disabled; skipping data update.")
             return self.data or {}
         try:

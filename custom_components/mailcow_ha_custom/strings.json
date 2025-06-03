@@ -4,27 +4,22 @@
       "user": {
         "title": "Connect to Mailcow",
         "data": {
-          "base_url": "Mailcow Base URL (e.g. https://mail.domainmailcow.com)",
+          "base_url": "Mailcow Base URL (EX. https://mail.domainmailcow.com)",
           "api_key": "API Key",
-          "disable_check_at_night": "Disable update checks at night",
-          "scan_interval": "Scan interval (in minutes)",
-          "night_start_hour": "Night start hour (0-23)",
-          "night_end_hour": "Night end hour (0-23)"
+          "disable_check_at_night": "Disable update checks between 11:00 PM and 5:00 AM",
+          "scan_interval": "Scan interval (in minutes)"
         },
         "data_description": {
           "base_url": "The base URL of your Mailcow installation",
           "api_key": "The API key for your Mailcow installation",
-          "disable_check_at_night": "Do not check entities during the period",
-          "scan_interval": "How often Mailcow entities are checked (in minutes)",
-          "night_start_hour": "Hour at which the period starts (e.g. 23 for 11:00 PM), if enabled",
-          "night_end_hour": "Hour at which the period ends (e.g. 5 for 5:00 AM), if enabled"
+          "disable_check_at_night": "Skipping 23h00-05H00 entities due to disabled night check",
+          "scan_interval": "How often Mailcow entities are checked (in minutes)"
         }
       }
     },
     "error": {
       "cannot_connect": "Failed to connect, please check your URL and API key",
-      "invalid_auth": "Invalid API key",
-      "unknown": "An unknown error occurred. Please try again."
+      "invalid_auth": "Invalid API key"
     }
   },
   "options": {
@@ -32,16 +27,12 @@
       "init": {
         "title": "Mailcow Options",
         "data": {
-          "disable_check_at_night": "Disable update checks",
-          "scan_interval": "Scan interval (in minutes)",
-          "night_start_hour": "Start hour (0-23)",
-          "night_end_hour": "End hour (0-23)"
+          "disable_check_at_night": "Disable update checks between 11:00 PM and 5:00 AM",
+          "scan_interval": "Scan interval (in minutes)"
         },
         "data_description": {
-          "disable_check_at_night": "Do not check entities during the period",
-          "scan_interval": "How often Mailcow entities are checked (in minutes)",
-          "night_start_hour": "Hour at which the period starts (e.g. 23 for 11:00 PM), if enabled",
-          "night_end_hour": "Hour at which the period ends (e.g. 5 for 5:00 AM), if enabled"
+          "disable_check_at_night": "Disable the check of entities during the night (11:00 PM to 5:00 AM)",
+          "scan_interval": "How often Mailcow entities are checked (in minutes)"
         }
       }
     }
