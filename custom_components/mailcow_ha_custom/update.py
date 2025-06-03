@@ -1,23 +1,41 @@
-from homeassistant.components.update import UpdateEntity
+"""Update entity for Mailcow integration."""
+
+import logging
+from homeassistant.components.update import UpdateEntity, UpdateEntityFeature
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from homeassistant.const import EntityCategory
 from urllib.parse import urlparse
+
 from .const import DOMAIN
+
+_LOGGER = logging.getLogger(__name__)
 
 def sanitize_url(url: str) -> str:
     return ''.join(filter(str.isalnum, url))
 
 class MailcowUpdateEntity(CoordinatorEntity, UpdateEntity):
-    """Représente la mise à jour Mailcow."""
+    """Representation of a Mailcow update entity."""
+
+    _attr_has_entity_name = True
+    _attr_supported_features = UpdateEntityFeature.INSTALL
 
     def __init__(self, coordinator):
         super().__init__(coordinator)
         self._attr_name = "Mailcow Update"
-        self._attr_unique_id = f"mailcow_update_{sanitize_url(getattr(coordinator, '_base_url', ''))}_{getattr(coordinator, 'entry_id', '')}"
-        self._attr_device_class = "update"
+        self._attr_unique_id = (
+            f"mailcow_update_{sanitize_url(coordinator._base_url)}_{coordinator.entry_id}"
+        )
         self._base_url = coordinator._base_url
-        self._attr_entity_category = EntityCategory.CONFIG
-        self._entry_id = getattr(coordinator, "entry_id", None) 
+        self._entry_id = coordinator.entry_id
+
+    @property
+    def device_info(self):
+        return {
+            "identifiers": {(DOMAIN, self._entry_id)},
+            "manufacturer": "Master13011",
+            "model": "API",
+            "name": urlparse(self._base_url).netloc,
+            "sw_version": self.installed_version or "unknown",
+        }
 
     @property
     def installed_version(self):
@@ -28,36 +46,38 @@ class MailcowUpdateEntity(CoordinatorEntity, UpdateEntity):
         return self.coordinator.data.get("latest_version")
 
     @property
-    def in_progress(self):
-        return False
+    def release_url(self):
+        latest = self.latest_version
+        if latest and latest != "unknown":
+            return f"https://github.com/mailcow/mailcow-dockerized/releases/tag/{latest}"
+        return "https://github.com/mailcow/mailcow-dockerized/releases"
 
     @property
     def title(self):
         return "Mailcow"
-        
-    @property
-    def extra_state_attributes(self):
-        return {
-            "installed_version": self.coordinator.data.get("version", "unknown"),
-            "latest_version": self.coordinator.data.get("latest_version", "unknown"),
-            "release_url": "https://github.com/mailcow/mailcow-dockerized/releases"
-        }
-   
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, self._entry_id)},
-            "manufacturer": "Master13011",
-            "model": "API",
-            "name": urlparse(self._base_url).netloc,
-            "sw_version": self.coordinator.data.get("version", "unknown"),
-        } 
-    async def async_install(self, version, backup, **kwargs):
-        # Implémente ici la logique d'installation de la mise à jour Mailcow si tu veux
-        pass
 
-    async def async_update(self):
-        await self.coordinator.async_request_refresh()
+    async def async_install(self, version: str, backup: bool, **kwargs):
+        """Trigger the update process (manual step)."""
+        # Mailcow update is manual, so just log a message and set a persistent notification
+        _LOGGER.info(
+            "Mailcow update requested to version %s. Please update manually following: %s",
+            version,
+            self.release_url,
+        )
+        hass = self.hass
+        hass.async_create_task(
+            hass.services.async_call(
+                "persistent_notification",
+                "create",
+                {
+                    "title": "Mailcow Update",
+                    "message": (
+                        f"Veuillez mettre à jour Mailcow manuellement vers la version {version}.\n"
+                        f"[Voir la release ici]({self.release_url})"
+                    ),
+                },
+            )
+        )
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     coordinator = hass.data[DOMAIN][config_entry.entry_id]

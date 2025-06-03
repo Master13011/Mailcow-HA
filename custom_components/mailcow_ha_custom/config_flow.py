@@ -3,6 +3,7 @@ import voluptuous as vol
 from homeassistant import config_entries
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.core import callback
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
 from .const import (
     DOMAIN,
@@ -14,6 +15,7 @@ from .const import (
 from .api import MailcowAPI
 
 _LOGGER = logging.getLogger(__name__)
+
 
 class CannotConnect(HomeAssistantError):
     """Error to indicate we cannot connect."""
@@ -34,7 +36,6 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         if user_input is not None:
             try:
                 await self._validate_input(user_input)
-                # Sépare les données de base et les options
                 return self.async_create_entry(
                     title="Mailcow",
                     data={
@@ -51,7 +52,7 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             except AuthenticationError:
                 errors["base"] = "invalid_auth"
             except Exception as e:
-                _LOGGER.exception(f"Unexpected exception: {e}")
+                _LOGGER.exception("Unexpected exception: %s", e)
                 errors["base"] = "unknown"
 
         data_schema = vol.Schema({
@@ -69,13 +70,15 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def _validate_input(self, user_input):
         """Validate the user input."""
+        session = async_get_clientsession(self.hass)
+        api = MailcowAPI(user_input, session)
         try:
-            api = MailcowAPI(user_input[CONF_BASE_URL], user_input[CONF_API_KEY], self.hass)
-            await self.hass.async_add_executor_job(api.get_status_version)
+            version = await api.get_status_version()
+            if not version:
+                raise CannotConnect
         except Exception as err:
-            _LOGGER.error(f"Error during validation: {err}")
-            # Si c'est une erreur d'authentification (exemple 403)
-            if hasattr(err, "response") and err.response is not None and getattr(err.response, "status_code", None) == 403:
+            _LOGGER.error(f"Error during API validation: {err}")
+            if hasattr(err, "response") and getattr(err.response, "status_code", None) == 403:
                 raise AuthenticationError from err
             raise CannotConnect from err
 
@@ -91,14 +94,21 @@ class MailcowOptionsFlowHandler(config_entries.OptionsFlow):
     async def async_step_init(self, user_input=None):
         """Manage the options."""
         if user_input is not None:
-            await self._apply_options(user_input)
-            await self.hass.config_entries.async_reload(self.config_entry.entry_id)
-            return self.async_create_entry(title="", data=user_input)
+            options = {
+                CONF_DISABLE_CHECK_AT_NIGHT: user_input.get(CONF_DISABLE_CHECK_AT_NIGHT, False),
+                CONF_SCAN_INTERVAL: user_input.get(CONF_SCAN_INTERVAL, 10),
+            }
 
-        # Utilisation de self.config_entry pour obtenir les options existantes
-        disable_check_at_night = self.config_entry.options.get("disable_check_at_night", False)
+            self.hass.config_entries.async_update_entry(
+                self.config_entry,
+                options=options,
+            )
+            await self.hass.config_entries.async_reload(self.config_entry.entry_id)
+            return self.async_create_entry(title="", data=options)
+
+        disable_check_at_night = self.config_entry.options.get(CONF_DISABLE_CHECK_AT_NIGHT, False)
         scan_interval = self.config_entry.options.get(CONF_SCAN_INTERVAL, 10)
-        
+
         data_schema = vol.Schema({
             vol.Optional(CONF_DISABLE_CHECK_AT_NIGHT, default=disable_check_at_night): bool,
             vol.Optional(CONF_SCAN_INTERVAL, default=scan_interval): int,
@@ -108,15 +118,3 @@ class MailcowOptionsFlowHandler(config_entries.OptionsFlow):
             step_id="init",
             data_schema=data_schema,
         )
-
-    async def _apply_options(self, user_input):
-        """Apply options after modification."""
-        # Les options à appliquer
-        options = {
-            CONF_DISABLE_CHECK_AT_NIGHT: user_input.get(CONF_DISABLE_CHECK_AT_NIGHT, False),
-            CONF_SCAN_INTERVAL: user_input.get(CONF_SCAN_INTERVAL, 10),
-        }
-
-        # Mise à jour des options via self.config_entry
-        if self.config_entry:
-            self.hass.config_entries.async_update_entry(self.config_entry, options=options)
