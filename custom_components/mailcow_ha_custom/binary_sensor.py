@@ -1,10 +1,12 @@
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.components.binary_sensor import BinarySensorEntity
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from typing import Optional
 
 from .const import DOMAIN
 
 class MailcowContainerBinarySensor(CoordinatorEntity, BinarySensorEntity):
-    def __init__(self, coordinator, container_id, container_name):
+    def __init__(self, coordinator: DataUpdateCoordinator, container_id: str, container_name: str) -> None:
         super().__init__(coordinator)
         self._container_id = container_id
         self._container_name = container_name
@@ -15,9 +17,12 @@ class MailcowContainerBinarySensor(CoordinatorEntity, BinarySensorEntity):
     def is_on(self):
         """Le conteneur est 'on' si état running."""
         containers = self.coordinator.data.get("containers_status", [])
-        for container in containers:
-            if container.get("id") == self._container_id or container.get("name") == self._container_name:
-                return container.get("state") == "running"
+        container = next(
+            (c for c in containers if c.get("id") == self._container_id or c.get("name") == self._container_name),
+            None
+        )
+        if container:
+            return container.get("state") == "running"
         return False
 
     @property
@@ -27,3 +32,10 @@ class MailcowContainerBinarySensor(CoordinatorEntity, BinarySensorEntity):
             return "mdi:checkbox-marked-circle-outline"  # vert par défaut dans HA
         else:
             return "mdi:alert-circle-outline"  # rouge par défaut dans HA
+    @property
+    def name(self) -> str:
+        return f"Mailcow Container {self._container_name}"
+    
+    @property
+    def unique_id(self) -> str:
+        return f"mailcow_container_{self._container_id}_{self.coordinator.entry_id}"
