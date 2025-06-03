@@ -13,7 +13,11 @@ from .const import (
     CONF_SCAN_INTERVAL,
 )
 from .api import MailcowAPI
-
+from .exceptions import (
+    MailcowAuthenticationError,
+    MailcowConnectionError,
+    MailcowAPIError,
+)
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -69,17 +73,21 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
     async def _validate_input(self, user_input):
-        """Validate the user input."""
+        """Validate the user input against the Mailcow API."""
         session = async_get_clientsession(self.hass)
         api = MailcowAPI(user_input, session)
         try:
             version = await api.get_status_version()
             if not version:
-                raise CannotConnect
+                raise CannotConnect("No version received")
+        except MailcowAuthenticationError as err:
+            raise AuthenticationError from err
+        except MailcowConnectionError as err:
+            raise CannotConnect from err
+        except MailcowAPIError as err:
+            raise CannotConnect from err
         except Exception as err:
-            _LOGGER.error(f"Error during API validation: {err}")
-            if hasattr(err, "response") and getattr(err.response, "status_code", None) == 403:
-                raise AuthenticationError from err
+            _LOGGER.error(f"Unexpected error during API validation: {err}")
             raise CannotConnect from err
 
     @staticmethod
