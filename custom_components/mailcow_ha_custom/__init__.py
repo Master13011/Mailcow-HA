@@ -23,11 +23,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     coordinator = MailcowCoordinator(
         hass,
         api,
-        session,
         entry.options.get(CONF_SCAN_INTERVAL, 10),
         entry.options.get(CONF_DISABLE_CHECK_AT_NIGHT, False),
         entry.entry_id,
         entry.data.get(CONF_BASE_URL),
+        session=session,
         night_start_hour=entry.options.get(CONF_NIGHT_START_HOUR, 23),
         night_end_hour=entry.options.get(CONF_NIGHT_END_HOUR, 5),
     )
