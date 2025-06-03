@@ -34,7 +34,7 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     VERSION = 1
 
-    async def async_step_user(self, user_input=None):
+    async def async_step_user(self, user_input: dict | None = None) -> dict:
         """Handle the initial step."""
         errors = {}
         if user_input is not None:
@@ -63,7 +63,7 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             vol.Required(CONF_BASE_URL): str,
             vol.Required(CONF_API_KEY): str,
             vol.Optional(CONF_DISABLE_CHECK_AT_NIGHT, default=False): bool,
-            vol.Optional(CONF_SCAN_INTERVAL, default=10): int,
+            vol.Optional(CONF_SCAN_INTERVAL, default=10): vol.All(int, vol.Range(min=1))
         })
 
         return self.async_show_form(
@@ -99,7 +99,7 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 class MailcowOptionsFlowHandler(config_entries.OptionsFlow):
     """Handle options flow for Mailcow."""
 
-    async def async_step_init(self, user_input=None):
+    async def async_step_init(self, user_input: dict | None = None) -> dict:
         """Manage the options."""
         if user_input is not None:
             options = {
@@ -119,7 +119,7 @@ class MailcowOptionsFlowHandler(config_entries.OptionsFlow):
 
         data_schema = vol.Schema({
             vol.Optional(CONF_DISABLE_CHECK_AT_NIGHT, default=disable_check_at_night): bool,
-            vol.Optional(CONF_SCAN_INTERVAL, default=scan_interval): int,
+            vol.Optional(CONF_SCAN_INTERVAL, default=scan_interval): vol.All(int, vol.Range(min=1)),
         })
 
         return self.async_show_form(
