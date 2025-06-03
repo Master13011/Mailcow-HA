@@ -6,25 +6,20 @@
         "data": {
           "base_url": "URL de base de Mailcow (ex. https://mail.domaine.fr)",
           "api_key": "Clé API",
-          "disable_check_at_night": "Désactiver la vérification",
-          "scan_interval": "Intervalle de scan (en minutes)",
-          "night_start_hour": "Heure de début (0-23)",
-          "night_end_hour": "Heure de fin (0-23)"
+          "disable_check_at_night": "Désactiver la vérification des mises à jour entre 23h00 et 5h00",
+          "scan_interval": "Intervalle de scan (en minutes)"
         },
         "data_description": {
           "base_url": "L'URL de base de votre installation Mailcow",
           "api_key": "La clé API de votre installation Mailcow",
-          "disable_check_at_night": "Ne pas vérifier les entités pendant la période",
-          "scan_interval": "Fréquence de vérification des entités Mailcow (en minutes)",
-          "night_start_hour": "Heure à laquelle commence la période (ex. 23 pour 23h00), si activé",
-          "night_end_hour": "Heure à laquelle se termine la période (ex. 5 pour 5h00), si activé"
+          "disable_check_at_night": "Désactive la vérification des entités pendant la nuit (de 23h00 à 5h00)",
+          "scan_interval": "Fréquence de vérification des entités Mailcow (en minutes)"
         }
       }
     },
     "error": {
       "cannot_connect": "Impossible de se connecter, vérifiez l'URL et la clé API",
-      "invalid_auth": "Clé API invalide",
-      "unknown": "Une erreur inconnue est survenue. Veuillez réessayer."
+      "invalid_auth": "Clé API invalide"
     }
   },
   "options": {
@@ -32,16 +27,12 @@
       "init": {
         "title": "Options Mailcow",
         "data": {
-          "disable_check_at_night": "Désactiver la vérification",
-          "scan_interval": "Intervalle de scan (en minutes)",
-          "night_start_hour": "Heure de début (0-23)",
-          "night_end_hour": "Heure de fin (0-23)"
+          "disable_check_at_night": "Désactiver la vérification des entités entre 23h00 et 5h00",
+          "scan_interval": "Intervalle de scan (en minutes)"
         },
         "data_description": {
-          "disable_check_at_night": "Ne pas vérifier les entités pendant la période",
-          "scan_interval": "Fréquence de vérification des entités Mailcow (en minutes)",
-          "night_start_hour": "Heure à laquelle commence la période (ex. 23 pour 23h00), si activé",
-          "night_end_hour": "Heure à laquelle se termine la période (ex. 5 pour 5h00), si activé"
+          "disable_check_at_night": "Désactive la vérification des entités pendant la nuit (de 23h00 à 5h00)",
+          "scan_interval": "Fréquence de vérification des entités Mailcow (en minutes)"
         }
       }
     }
