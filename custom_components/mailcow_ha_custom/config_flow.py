@@ -32,6 +32,8 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def async_step_user(self, user_input=None):
         """Handle the initial step."""
+        default_start = 23
+        default_end = 5
         errors = {}
         if user_input is not None:
             try:
@@ -56,8 +58,7 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             except Exception as e:
                 _LOGGER.exception(f"Unexpected exception: {e}")
                 errors["base"] = "unknown"
-        default_start = 23
-        default_end = 5
+
         data_schema = vol.Schema({
             vol.Required(CONF_BASE_URL): str,
             vol.Required(CONF_API_KEY): str,
