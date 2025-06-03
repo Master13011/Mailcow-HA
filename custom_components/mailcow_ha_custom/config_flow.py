@@ -71,11 +71,7 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def _validate_input(self, user_input):
         """Validate the user input."""
         session = async_get_clientsession(self.hass)
-        api = MailcowAPI(
-            base_url=user_input[CONF_BASE_URL],
-            api_key=user_input[CONF_API_KEY],
-            session=session
-        )
+        api = MailcowAPI(user_input, session)
         try:
             version = await api.get_status_version()
             if not version:
