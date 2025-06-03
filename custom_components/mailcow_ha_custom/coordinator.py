@@ -45,7 +45,7 @@ class MailcowCoordinator(DataUpdateCoordinator):
         return "unknown"
 
     async def _async_update_data(self) -> dict[str, Any]:
-        if self.disable_check_at_night and is_night_time():
+        if self.disable_check_at_night and is_night_time(self.hass):
             _LOGGER.debug("Night check disabled; skipping data update.")
             return self.data or {}
         try:
