@@ -7,11 +7,11 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 _LOGGER = logging.getLogger(__name__)
 
-def is_night_time(hass) -> bool:
+async def is_night_time(hass) -> bool:
     """Retourne True si l'heure locale Home Assistant est entre 23h et 5h."""
-    # Récupère le fuseau horaire configuré dans Home Assistant
     tz_name = str(hass.config.time_zone)
-    tz = pytz.timezone(tz_name)
+    # Exécuter pytz.timezone dans un thread séparé pour ne pas bloquer la boucle async
+    tz = await hass.async_add_executor_job(pytz.timezone, tz_name)
     now = datetime.now(tz)
     hour = now.hour
     return hour >= 23 or hour < 5
@@ -45,7 +45,7 @@ class MailcowCoordinator(DataUpdateCoordinator):
         return "unknown"
 
     async def _async_update_data(self) -> dict[str, Any]:
-        if self.disable_check_at_night and is_night_time(self.hass):
+        if self.disable_check_at_night and await is_night_time(self.hass):
             _LOGGER.debug("Night check disabled; skipping data update.")
             return self.data or {}
         try:
