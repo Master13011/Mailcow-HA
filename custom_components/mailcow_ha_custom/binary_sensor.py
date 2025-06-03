@@ -29,10 +29,4 @@ class MailcowContainerBinarySensor(CoordinatorEntity, BinarySensorEntity):
             return "mdi:checkbox-marked-circle-outline"  # vert par défaut dans HA
         else:
             return "mdi:alert-circle-outline"  # rouge par défaut dans HA
-    @property
-    def name(self) -> str:
-        return f"Mailcow Container {self._container_name}"
-    
-    @property
-    def unique_id(self) -> str:
-        return f"mailcow_container_{self._container_id}_{self.coordinator.entry_id}"
+
