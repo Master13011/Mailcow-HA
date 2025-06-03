@@ -64,8 +64,8 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             vol.Required(CONF_API_KEY): str,
             vol.Optional(CONF_SCAN_INTERVAL, default=10): int,
             vol.Optional(CONF_DISABLE_CHECK_AT_NIGHT, default=False): bool,
-            vol.Optional(CONF_NIGHT_START_HOUR, default=default_start): int,
-            vol.Optional(CONF_NIGHT_END_HOUR, default=default_end): int,
+            vol.Optional(CONF_NIGHT_START_HOUR, default=night_start_hour): vol.All(cv.positive_int, vol.Range(min=0, max=23)),
+            vol.Optional(CONF_NIGHT_END_HOUR, default=night_end_hour): vol.All(cv.positive_int, vol.Range(min=0, max=23)),
         })
 
         return self.async_show_form(
@@ -112,8 +112,8 @@ class MailcowOptionsFlowHandler(config_entries.OptionsFlow):
         
         if disable_check_at_night:
             data_schema.update({
-                vol.Optional(CONF_NIGHT_START_HOUR, default=night_start_hour): int,
-                vol.Optional(CONF_NIGHT_END_HOUR, default=night_end_hour): int,
+                vol.Optional(CONF_NIGHT_START_HOUR, default=night_start_hour): vol.All(cv.positive_int, vol.Range(min=0, max=23)),
+                vol.Optional(CONF_NIGHT_END_HOUR, default=night_end_hour): vol.All(cv.positive_int, vol.Range(min=0, max=23)),
             })
         
         return self.async_show_form(
