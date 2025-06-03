@@ -1,18 +1,16 @@
 """API client for Mailcow."""
-
-import logging
 import asyncio
 from aiohttp import ClientSession, ClientError
 from .const import CONF_API_KEY, CONF_BASE_URL
-from typing import Any, Optional, List, Dict, Union
-
-_LOGGER = logging.getLogger(__name__)
-
+from typing import Any, Optional, List, Dict
 from .exceptions import (
     MailcowAPIError,
     MailcowAuthenticationError,
     MailcowConnectionError
 )
+import logging
+
+_LOGGER = logging.getLogger(__name__)
 
 class MailcowAPI:
     """Asynchronous Mailcow API client."""
