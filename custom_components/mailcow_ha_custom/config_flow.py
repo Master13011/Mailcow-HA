@@ -107,16 +107,29 @@ class MailcowOptionsFlowHandler(config_entries.OptionsFlow):
         if user_input is not None:
             disable_check_at_night = user_input.get(CONF_DISABLE_CHECK_AT_NIGHT, False)
     
-            # Nettoyage des heures
+            # Si option désactivée, on supprime les champs heures pour éviter validation foireuse
             if not disable_check_at_night:
                 user_input.pop(CONF_NIGHT_START_HOUR, None)
                 user_input.pop(CONF_NIGHT_END_HOUR, None)
-            else:
-                if user_input.get(CONF_NIGHT_START_HOUR) == "":
-                    user_input[CONF_NIGHT_START_HOUR] = None
-                if user_input.get(CONF_NIGHT_END_HOUR) == "":
-                    user_input[CONF_NIGHT_END_HOUR] = None
     
+            # Sinon on valide la présence et la valeur des heures
+            else:
+                start = user_input.get(CONF_NIGHT_START_HOUR)
+                end = user_input.get(CONF_NIGHT_END_HOUR)
+    
+                # Si vide ou None, erreur
+                if start is None or end is None:
+                    errors["base"] = "night_hours_required"
+                else:
+                    try:
+                        start_int = int(start)
+                        end_int = int(end)
+                        if not (0 <= start_int <= 23) or not (0 <= end_int <= 23):
+                            errors["base"] = "invalid_night_hours"
+                    except Exception:
+                        errors["base"] = "invalid_night_hours"
+    
+            # Si l'utilisateur vient de changer la valeur du switch, on recharge sans valider
             if disable_check_at_night != initial_disable_check_at_night:
                 data_schema = self._get_data_schema(
                     disable_check_at_night,
@@ -124,19 +137,7 @@ class MailcowOptionsFlowHandler(config_entries.OptionsFlow):
                     user_input.get(CONF_NIGHT_START_HOUR, night_start_hour),
                     user_input.get(CONF_NIGHT_END_HOUR, night_end_hour),
                 )
-                return self.async_show_form(
-                    step_id="init",
-                    data_schema=data_schema,
-                    errors={},
-                )
-    
-            if disable_check_at_night:
-                start = user_input.get(CONF_NIGHT_START_HOUR)
-                end = user_input.get(CONF_NIGHT_END_HOUR)
-                if start is None or end is None:
-                    errors["base"] = "night_hours_required"
-                elif not (0 <= start <= 23) or not (0 <= end <= 23):
-                    errors["base"] = "invalid_night_hours"
+                return self.async_show_form(step_id="init", data_schema=data_schema, errors={})
     
             if not errors:
                 return self.async_create_entry(title="", data=user_input)
