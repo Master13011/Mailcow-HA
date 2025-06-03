@@ -3,7 +3,6 @@ from urllib.parse import urlparse
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.components.sensor import SensorEntity, SensorStateClass
 from .const import DOMAIN
-from .binary_sensor import MailcowContainerBinarySensor
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -113,14 +112,3 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         MailcowContainersStatusSensor(coordinator),
     ]
     async_add_entities(sensors, True)
-    
-    containers = coordinator.data.get("containers_status", [])
-    binary_sensors = []
-    if containers and isinstance(containers, list):
-        for container in containers:
-            container_id = container.get("id") or container.get("name")
-            container_name = container.get("name") or container.get("id")
-            binary_sensors.append(MailcowContainerBinarySensor(coordinator, container_id, container_name))
-
-    if binary_sensors:
-        async_add_entities(binary_sensors, True)
