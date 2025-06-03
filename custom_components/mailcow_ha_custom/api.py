@@ -71,5 +71,7 @@ class MailcowAPI:
         return result if isinstance(result, dict) else {}
 
     async def get_status_containers(self) -> List[Any]:
-        result = await self._get("status/containers")
-        return result if isinstance(result, list) else []
+            result = await self._get("status/containers")
+            if isinstance(result, (list, dict)):
+                return result
+            return []
