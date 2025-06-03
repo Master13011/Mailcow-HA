@@ -66,7 +66,7 @@ class MailcowVmailStatusSensor(MailcowSensor):
         
     @property
     def native_unit_of_measurement(self):
-    return "%"
+        return "%"
     
     @property
     def extra_state_attributes(self):
