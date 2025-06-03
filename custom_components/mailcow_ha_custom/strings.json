@@ -14,10 +14,10 @@
         "data_description": {
           "base_url": "The base URL of your Mailcow installation",
           "api_key": "The API key for your Mailcow installation",
-          "disable_check_at_night": "Do not check entities during the night period",
+          "disable_check_at_night": "Do not check entities during the period",
           "scan_interval": "How often Mailcow entities are checked (in minutes)",
-          "night_start_hour": "Hour at which the night period starts (e.g. 23 for 11:00 PM), if enabled",
-          "night_end_hour": "Hour at which the night period ends (e.g. 5 for 5:00 AM), if enabled"
+          "night_start_hour": "Hour at which the period starts (e.g. 23 for 11:00 PM), if enabled",
+          "night_end_hour": "Hour at which the period ends (e.g. 5 for 5:00 AM), if enabled"
         }
       }
     },
@@ -32,16 +32,16 @@
       "init": {
         "title": "Mailcow Options",
         "data": {
-          "disable_check_at_night": "Disable update checks at night",
+          "disable_check_at_night": "Disable update checks",
           "scan_interval": "Scan interval (in minutes)",
-          "night_start_hour": "Night start hour (0-23)",
-          "night_end_hour": "Night end hour (0-23)"
+          "night_start_hour": "Start hour (0-23)",
+          "night_end_hour": "End hour (0-23)"
         },
         "data_description": {
-          "disable_check_at_night": "Do not check entities during the night period",
+          "disable_check_at_night": "Do not check entities during the period",
           "scan_interval": "How often Mailcow entities are checked (in minutes)",
-          "night_start_hour": "Hour at which the night period starts (e.g. 23 for 11:00 PM), if enabled",
-          "night_end_hour": "Hour at which the night period ends (e.g. 5 for 5:00 AM), if enabled"
+          "night_start_hour": "Hour at which the period starts (e.g. 23 for 11:00 PM), if enabled",
+          "night_end_hour": "Hour at which the period ends (e.g. 5 for 5:00 AM), if enabled"
         }
       }
     }
