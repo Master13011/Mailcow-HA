@@ -1,4 +1,5 @@
 from datetime import timedelta, datetime
+import pytz
 import logging
 from typing import Any
 import aiohttp
@@ -6,9 +7,14 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 
 _LOGGER = logging.getLogger(__name__)
 
-def is_night_time() -> bool:
-    now = datetime.now().hour
-    return now >= 23 or now < 5
+def is_night_time(hass) -> bool:
+    """Retourne True si l'heure locale Home Assistant est entre 23h et 5h."""
+    # Récupère le fuseau horaire configuré dans Home Assistant
+    tz_name = str(hass.config.time_zone)
+    tz = pytz.timezone(tz_name)
+    now = datetime.now(tz)
+    hour = now.hour
+    return hour >= 23 or hour < 5
 
 class MailcowCoordinator(DataUpdateCoordinator):
     def __init__(self, hass, api, scan_interval: int, disable_check_at_night: bool, entry_id: str, base_url: str, session: aiohttp.ClientSession,):
