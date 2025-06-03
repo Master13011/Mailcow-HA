@@ -11,6 +11,8 @@ from .const import (
     CONF_BASE_URL,
     CONF_DISABLE_CHECK_AT_NIGHT,
     CONF_SCAN_INTERVAL,
+    CONF_NIGHT_START_HOUR,
+    CONF_NIGHT_END_HOUR,
 )
 
 from .api import MailcowAPI
@@ -43,6 +45,8 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     options={
                         CONF_DISABLE_CHECK_AT_NIGHT: user_input.get(CONF_DISABLE_CHECK_AT_NIGHT, False),
                         CONF_SCAN_INTERVAL: user_input.get(CONF_SCAN_INTERVAL, 10),
+                        CONF_NIGHT_START_HOUR: user_input.get(CONF_NIGHT_START_HOUR, default_start),
+                        CONF_NIGHT_END_HOUR: user_input.get(CONF_NIGHT_END_HOUR, default_end),
                     },
                 )
             except CannotConnect:
@@ -52,12 +56,15 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             except Exception as e:
                 _LOGGER.exception(f"Unexpected exception: {e}")
                 errors["base"] = "unknown"
-
+        default_start = 23
+        default_end = 5
         data_schema = vol.Schema({
             vol.Required(CONF_BASE_URL): str,
             vol.Required(CONF_API_KEY): str,
             vol.Optional(CONF_DISABLE_CHECK_AT_NIGHT, default=False): bool,
             vol.Optional(CONF_SCAN_INTERVAL, default=10): int,
+            vol.Optional(CONF_NIGHT_START_HOUR, default=default_start): int,
+            vol.Optional(CONF_NIGHT_END_HOUR, default=default_end): int,
         })
 
         return self.async_show_form(
@@ -94,13 +101,21 @@ class MailcowOptionsFlowHandler(config_entries.OptionsFlow):
         entry = self.hass.config_entries.async_get_entry(self._entry_id)
         disable_check_at_night = entry.options.get(CONF_DISABLE_CHECK_AT_NIGHT, False)
         scan_interval = entry.options.get(CONF_SCAN_INTERVAL, 10)
+        night_start_hour = entry.options.get(CONF_NIGHT_START_HOUR, 23)
+        night_end_hour = entry.options.get(CONF_NIGHT_END_HOUR, 5)
 
-        data_schema = vol.Schema({
+        data_schema = {
             vol.Optional(CONF_DISABLE_CHECK_AT_NIGHT, default=disable_check_at_night): bool,
             vol.Optional(CONF_SCAN_INTERVAL, default=scan_interval): int,
-        })
-
+        }
+        
+        if disable_check_at_night:
+            data_schema.update({
+                vol.Optional(CONF_NIGHT_START_HOUR, default=night_start_hour): int,
+                vol.Optional(CONF_NIGHT_END_HOUR, default=night_end_hour): int,
+            })
+        
         return self.async_show_form(
             step_id="init",
-            data_schema=data_schema,
+            data_schema=vol.Schema(data_schema),
         )
