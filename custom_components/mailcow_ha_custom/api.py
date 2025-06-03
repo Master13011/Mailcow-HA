@@ -6,9 +6,11 @@ from .const import CONF_API_KEY, CONF_BASE_URL
 
 _LOGGER = logging.getLogger(__name__)
 
-class MailcowAPIError(Exception): pass
-class MailcowAuthenticationError(MailcowAPIError): pass
-class MailcowConnectionError(MailcowAPIError): pass
+from .exceptions import (
+    MailcowAPIError,
+    MailcowAuthenticationError,
+    MailcowConnectionError
+)
 
 class MailcowAPI:
     """Asynchronous Mailcow API client."""
