@@ -10,7 +10,19 @@ def is_night_time(now: datetime, start: int, end: int) -> bool:
     return hour >= start or hour < end if start > end else start <= hour < end
     
 class MailcowCoordinator(DataUpdateCoordinator):
-    def __init__(self, hass, api, scan_interval: int, disable_check_at_night: bool, night_start_hour: int, night_end_hour: int, entry_id: str, base_url: str, session):
+    def __init__(
+        self,
+        *,
+        hass,
+        api,
+        scan_interval: int,
+        disable_check_at_night: bool,
+        night_start_hour: int,
+        night_end_hour: int,
+        entry_id: str,
+        base_url: str,
+        session,
+    ):
         super().__init__(
             hass,
             _LOGGER,
