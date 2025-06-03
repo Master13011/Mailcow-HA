@@ -1,9 +1,6 @@
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
-from typing import Optional
-
-from .const import DOMAIN
 
 class MailcowContainerBinarySensor(CoordinatorEntity, BinarySensorEntity):
     def __init__(self, coordinator: DataUpdateCoordinator, container_id: str, container_name: str) -> None:
