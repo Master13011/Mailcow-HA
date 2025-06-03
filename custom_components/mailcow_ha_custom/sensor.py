@@ -3,6 +3,7 @@ from urllib.parse import urlparse
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.components.sensor import SensorEntity, SensorStateClass
 from .const import DOMAIN
+from .binary_sensor import MailcowContainerBinarySensor
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -51,15 +52,22 @@ class MailcowVersionSensor(MailcowSensor):
 class MailcowVmailStatusSensor(MailcowSensor):
     def __init__(self, coordinator):
         super().__init__(coordinator, "Mailcow Vmail Status", "vmail_status", "mdi:harddisk")
-        self._attr_native_unit_of_measurement = "%"
         self._attr_state_class = SensorStateClass.MEASUREMENT
 
     @property
     def native_value(self):
         vmail_status = self.coordinator.data.get("vmail_status") or {}
         used_str = vmail_status.get("used_percent", "0")
-        return float(used_str.rstrip('%')) if used_str.endswith('%') else float(used_str)
-
+        try:
+            return float(used_str.rstrip('%'))
+        except (ValueError, AttributeError):
+            _LOGGER.warning("Invalid vmail_status used_percent value: %s", used_str)
+            return 0.0
+        
+    @property
+    def native_unit_of_measurement(self):
+    return "%"
+    
     @property
     def extra_state_attributes(self):
         status = self.coordinator.data.get("vmail_status") or {}
