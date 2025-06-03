@@ -1,9 +1,8 @@
-"""Update entity for Mailcow integration."""
-
 import logging
+from urllib.parse import urlparse
 from homeassistant.components.update import UpdateEntity, UpdateEntityFeature
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from urllib.parse import urlparse
+from homeassistant.helpers.entity import EntityCategory
 
 from .const import DOMAIN
 
@@ -17,6 +16,7 @@ class MailcowUpdateEntity(CoordinatorEntity, UpdateEntity):
 
     _attr_has_entity_name = True
     _attr_supported_features = UpdateEntityFeature.INSTALL
+    _attr_entity_category = EntityCategory.CONFIG
 
     def __init__(self, coordinator):
         super().__init__(coordinator)
@@ -58,15 +58,13 @@ class MailcowUpdateEntity(CoordinatorEntity, UpdateEntity):
 
     async def async_install(self, version: str, backup: bool, **kwargs):
         """Trigger the update process (manual step)."""
-        # Mailcow update is manual, so just log a message and set a persistent notification
         _LOGGER.info(
             "Mailcow update requested to version %s. Please update manually following: %s",
             version,
             self.release_url,
         )
-        hass = self.hass
-        hass.async_create_task(
-            hass.services.async_call(
+        try:
+            await self.hass.services.async_call(
                 "persistent_notification",
                 "create",
                 {
@@ -77,7 +75,8 @@ class MailcowUpdateEntity(CoordinatorEntity, UpdateEntity):
                     ),
                 },
             )
-        )
+        except Exception as err:
+            _LOGGER.error("Failed to create persistent notification: %s", err)
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     coordinator = hass.data[DOMAIN][config_entry.entry_id]

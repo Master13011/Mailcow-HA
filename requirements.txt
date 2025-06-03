@@ -2,3 +2,5 @@ colorlog
 homeassistant
 pip
 ruff
+pytest-asyncio
+pytest
