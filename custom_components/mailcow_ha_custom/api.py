@@ -36,11 +36,11 @@ class MailcowAPI:
                     _LOGGER.error("Client error from Mailcow API: %s", response.status)
                     raise MailcowAPIError(f"Client error {response.status}")
     
-                    try:
-                        return await response.json()
-                    except Exception as e:
-                        _LOGGER.error("Failed to parse JSON response from %s: %s", url, e)
-                        raise MailcowAPIError("Invalid JSON response") from e
+                try:
+                    return await response.json()
+                except Exception as e:
+                    _LOGGER.error("Failed to parse JSON response from %s: %s", url, e)
+                    raise MailcowAPIError("Invalid JSON response") from e
                         
         except ClientError as err:
             _LOGGER.error("Connection error when calling %s: %s", url, err)
