@@ -12,16 +12,18 @@ from .const import (
     CONF_DISABLE_CHECK_AT_NIGHT,
     CONF_SCAN_INTERVAL,
 )
-
 from .api import MailcowAPI
 
 _LOGGER = logging.getLogger(__name__)
 
+
 class CannotConnect(HomeAssistantError):
     """Error to indicate we cannot connect."""
 
+
 class AuthenticationError(HomeAssistantError):
     """Error to indicate authentication failure."""
+
 
 class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Mailcow."""
@@ -50,7 +52,7 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             except AuthenticationError:
                 errors["base"] = "invalid_auth"
             except Exception as e:
-                _LOGGER.exception(f"Unexpected exception: {e}")
+                _LOGGER.exception("Unexpected exception: %s", e)
                 errors["base"] = "unknown"
 
         data_schema = vol.Schema({
@@ -69,31 +71,50 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     async def _validate_input(self, user_input):
         """Validate the user input."""
         session = async_get_clientsession(self.hass)
-        api = MailcowAPI(user_input, session)
-        version = await api.get_status_version()
-        if not version:
-            raise CannotConnect
+        api = MailcowAPI(
+            base_url=user_input[CONF_BASE_URL],
+            api_key=user_input[CONF_API_KEY],
+            session=session
+        )
+        try:
+            version = await api.get_status_version()
+            if not version:
+                raise CannotConnect
+        except Exception as err:
+            _LOGGER.error(f"Error during API validation: {err}")
+            if hasattr(err, "response") and getattr(err.response, "status_code", None) == 403:
+                raise AuthenticationError from err
+            raise CannotConnect from err
 
     @staticmethod
     @callback
     def async_get_options_flow(config_entry):
         return MailcowOptionsFlowHandler(config_entry)
 
+
 class MailcowOptionsFlowHandler(config_entries.OptionsFlow):
     """Handle options flow for Mailcow."""
 
     def __init__(self, config_entry):
-        super().__init__()
-        self._entry_id = config_entry.entry_id
+        super().__init__(config_entry)
 
     async def async_step_init(self, user_input=None):
         """Manage the options."""
         if user_input is not None:
-            return self.async_create_entry(title="", data=user_input)
+            options = {
+                CONF_DISABLE_CHECK_AT_NIGHT: user_input.get(CONF_DISABLE_CHECK_AT_NIGHT, False),
+                CONF_SCAN_INTERVAL: user_input.get(CONF_SCAN_INTERVAL, 10),
+            }
 
-        entry = self.hass.config_entries.async_get_entry(self._entry_id)
-        disable_check_at_night = entry.options.get(CONF_DISABLE_CHECK_AT_NIGHT, False)
-        scan_interval = entry.options.get(CONF_SCAN_INTERVAL, 10)
+            self.hass.config_entries.async_update_entry(
+                self.config_entry,
+                options=options,
+            )
+            await self.hass.config_entries.async_reload(self.config_entry.entry_id)
+            return self.async_create_entry(title="", data=options)
+
+        disable_check_at_night = self.config_entry.options.get(CONF_DISABLE_CHECK_AT_NIGHT, False)
+        scan_interval = self.config_entry.options.get(CONF_SCAN_INTERVAL, 10)
 
         data_schema = vol.Schema({
             vol.Optional(CONF_DISABLE_CHECK_AT_NIGHT, default=disable_check_at_night): bool,
