@@ -6,6 +6,10 @@ from .const import CONF_API_KEY, CONF_BASE_URL
 
 _LOGGER = logging.getLogger(__name__)
 
+class MailcowAPIError(Exception): pass
+class MailcowAuthenticationError(MailcowAPIError): pass
+class MailcowConnectionError(MailcowAPIError): pass
+
 class MailcowAPI:
     """Asynchronous Mailcow API client."""
 
@@ -20,13 +24,29 @@ class MailcowAPI:
         headers = {"X-API-Key": self._api_key}
         try:
             async with self._session.get(url, headers=headers) as response:
-                response.raise_for_status()
+                if response.status == 403:
+                    _LOGGER.error("Authentication failed for endpoint %s", endpoint)
+                    raise MailcowAuthenticationError("Invalid API key or permission denied")
+                elif response.status >= 500:
+                    _LOGGER.error("Server error from Mailcow API: %s", response.status)
+                    raise MailcowAPIError(f"Server error {response.status}")
+                elif response.status >= 400:
+                    _LOGGER.error("Client error from Mailcow API: %s", response.status)
+                    raise MailcowAPIError(f"Client error {response.status}")
+    
                 return await response.json()
+    
         except ClientError as err:
-            _LOGGER.error("Mailcow API request failed: %s", err)
+            _LOGGER.error("Connection error when calling %s: %s", url, err)
+            raise MailcowConnectionError("Failed to connect to Mailcow API") from err
+    
+        except asyncio.TimeoutError:
+            _LOGGER.error("Timeout when connecting to %s", url)
+            raise MailcowConnectionError("Connection timed out")
+    
         except Exception as ex:
             _LOGGER.exception("Unexpected error while calling Mailcow API: %s", ex)
-        return None
+            raise MailcowAPIError("Unexpected error occurred") from ex
 
     async def get_mailbox_count(self) -> int | None:
         data = await self._get("mailbox/all")
