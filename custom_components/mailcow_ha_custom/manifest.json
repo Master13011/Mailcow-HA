@@ -1,14 +1,14 @@
 {
   "domain": "mailcow_ha_custom",
   "name": "Mailcow HA Integration",
-  "version": "1.0.0",
-  "documentation": "https://github.com/Master13011/Mailcow-HA",
-  "issue_tracker": "https://github.com/Master13011/Mailcow-HA/issues",
-  "dependencies": [],
   "after_dependencies": ["http"],
-  "requirements": ["aiohttp"],
   "codeowners": ["@Master13011"],
   "config_flow": true,
+  "dependencies": [],
+  "documentation": "https://github.com/Master13011/Mailcow-HA",
   "iot_class": "cloud_polling",
-  "loggers": ["custom_components.mailcow_ha_custom"]
+  "issue_tracker": "https://github.com/Master13011/Mailcow-HA/issues",
+  "loggers": ["custom_components.mailcow_ha_custom"],
+  "requirements": ["aiohttp"],
+  "version": "1.0.0"
 }
