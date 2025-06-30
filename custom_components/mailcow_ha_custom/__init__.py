@@ -3,11 +3,14 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.config import ConfigType
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers import config_validation as cv
 import aiohttp
 
 from .const import DOMAIN, PLATFORMS, CONF_SCAN_INTERVAL, CONF_DISABLE_CHECK_AT_NIGHT, CONF_BASE_URL
 from .coordinator import MailcowCoordinator
 from .api import MailcowAPI
+
+CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 _LOGGER = logging.getLogger(__name__)
 
