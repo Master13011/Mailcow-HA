@@ -54,9 +54,7 @@ class MailcowCoordinator(DataUpdateCoordinator):
             domain_count = await self.api.get_domain_count()
             vmail_status = await self.api.get_status_vmail()
             containers_status = await self.api.get_status_containers()
-
-            if self._cached_latest_version is None:
-                self._cached_latest_version = await self._fetch_latest_github_version()
+            latest_version = await self._fetch_latest_github_version()
 
             return {
                 "version": version,
@@ -64,7 +62,7 @@ class MailcowCoordinator(DataUpdateCoordinator):
                 "domain_count": domain_count,
                 "vmail_status": vmail_status,
                 "containers_status": containers_status,
-                "latest_version": self._cached_latest_version,
+                "latest_version": latest_version,
             }
         except Exception as err:
             raise UpdateFailed(f"Error fetching data: {err}") from err
