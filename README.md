@@ -25,17 +25,17 @@ Cette intégration personnalisée permet de connecter votre serveur Mailcow à H
 
 ou
 
-4. Cliquez sur les trois points en haut à droite et choisissez "Dépôts personnalisés".
+3. Cliquez sur les trois points en haut à droite et choisissez "Dépôts personnalisés".
 
-5. Ajoutez le dépôt :
+4. Ajoutez le dépôt :
    - URL : 'https://github.com/Master13011/Mailcow-HA'
    - Type : Intégration
 
-6. Cliquez sur "Ajouter".
+5. Cliquez sur "Ajouter".
 
-7. Recherchez "Mailcow HA" dans les intégrations HACS et installez-la.
+6. Recherchez "Mailcow HA" dans les intégrations HACS et installez-la.
 
-8. Redémarrez Home Assistant.
+7. Redémarrez Home Assistant.
 
 ## Configuration
 
