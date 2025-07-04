@@ -18,6 +18,10 @@ This custom integration allows you to connect your Mailcow server to Home Assist
 1. Make sure [HACS](https://hacs.xyz) is installed.
 
 2. Open HACS.
+   
+3. Search : Mailcow HA Custom
+
+or
 
 3. Click the three dots in the top right corner and choose "Custom repositories".
 
