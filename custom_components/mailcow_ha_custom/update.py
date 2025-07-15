@@ -15,7 +15,6 @@ class MailcowUpdateEntity(CoordinatorEntity, UpdateEntity):
     """Representation of a Mailcow update entity."""
 
     _attr_has_entity_name = True
-    _attr_supported_features = UpdateEntityFeature.INSTALL
     _attr_entity_category = EntityCategory.CONFIG
 
     def __init__(self, coordinator):
