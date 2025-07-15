@@ -1,6 +1,6 @@
 import logging
 from urllib.parse import urlparse
-from homeassistant.components.update import UpdateEntity, UpdateEntityFeature
+from homeassistant.components.update import UpdateEntity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.helpers.entity import EntityCategory
 
