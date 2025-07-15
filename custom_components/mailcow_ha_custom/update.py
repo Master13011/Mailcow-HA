@@ -56,28 +56,6 @@ class MailcowUpdateEntity(CoordinatorEntity, UpdateEntity):
     def title(self):
         return "Mailcow"
 
-    async def async_install(self, version: str, backup: bool, **kwargs):
-        """Trigger the update process (manual step)."""
-        _LOGGER.info(
-            "Mailcow update requested to version %s. Please update manually following: %s",
-            version,
-            self.release_url,
-        )
-        try:
-            await self.hass.services.async_call(
-                "persistent_notification",
-                "create",
-                {
-                    "title": "Mailcow Update",
-                    "message": (
-                        f"Veuillez mettre à jour Mailcow manuellement vers la version {version}.\n"
-                        f"[Voir la release ici]({self.release_url})"
-                    ),
-                },
-            )
-        except Exception as err:
-            _LOGGER.error("Failed to create persistent notification: %s", err)
-
 async def async_setup_entry(hass, config_entry, async_add_entities):
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
     async_add_entities([MailcowUpdateEntity(coordinator)], True)
