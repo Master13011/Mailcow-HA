@@ -19,7 +19,8 @@ from .exceptions import (
     MailcowConnectionError,
     MailcowAPIError,
 )
-from typing import Any, Dict
+from typing import Dict
+
 _LOGGER = logging.getLogger(__name__)
 
 class CannotConnect(HomeAssistantError):
