@@ -98,7 +98,7 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 class MailcowOptionsFlowHandler(config_entries.OptionsFlow):
     """Handle options flow for Mailcow."""
 
-    async def async_step_init(self, user_input: dict | None = None) -> FlowResult:
+    async def async_step_init(self, user_input: dict | None = None) -> FlowResult: # type: ignore
         """Manage the options."""
         if user_input is not None:
             options = {
