@@ -4,7 +4,8 @@ from homeassistant import config_entries
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.data_entry_flow import FlowResult
+from homeassistant.data_entry_flow import FlowResult, FlowContext
+from homeassistant.config_entries import ConfigEntry
 
 from .const import (
     DOMAIN,
@@ -35,7 +36,7 @@ class AuthenticationError(HomeAssistantError):
 class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
 
-    async def async_step_user(self, user_input: dict | None = None) -> FlowResult: # type: ignore
+    async def async_step_user(self, user_input: dict | None = None) -> FlowResult[FlowContext, str]:
         errors: Dict[str, str] = {}
         if user_input is not None:
             try:
@@ -91,14 +92,14 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
     @staticmethod
     @callback
-    def async_get_options_flow(config_entry):
+    def async_get_options_flow(config_entry: ConfigEntry) -> config_entries.OptionsFlow:
         return MailcowOptionsFlowHandler()
 
 
 class MailcowOptionsFlowHandler(config_entries.OptionsFlow):
     """Handle options flow for Mailcow."""
 
-    async def async_step_init(self, user_input: dict | None = None) -> FlowResult: # type: ignore
+    async def async_step_init(self, user_input: dict | None = None) -> FlowResult[FlowContext, str]:
         """Manage the options."""
         if user_input is not None:
             options = {
