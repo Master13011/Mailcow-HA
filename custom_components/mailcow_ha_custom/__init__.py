@@ -8,7 +8,7 @@ from .const import DOMAIN, PLATFORMS, CONF_SCAN_INTERVAL, CONF_DISABLE_CHECK_AT_
 from .coordinator import MailcowCoordinator
 from .api import MailcowAPI
 
-CONFIG_SCHEMA = None  # Config validation handled in config flow
+CONFIG_SCHEMA = cv.EMPTY_SCHEMA
 
 _LOGGER = logging.getLogger(__name__)
 
