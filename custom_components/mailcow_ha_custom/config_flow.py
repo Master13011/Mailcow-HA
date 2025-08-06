@@ -18,25 +18,23 @@ from .exceptions import (
     MailcowConnectionError,
     MailcowAPIError,
 )
+from typing import Any, Dict
 _LOGGER = logging.getLogger(__name__)
-
 
 class CannotConnect(HomeAssistantError):
     """Error to indicate we cannot connect."""
 
-
 class AuthenticationError(HomeAssistantError):
     """Error to indicate authentication failure."""
-
 
 class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Mailcow."""
 
     VERSION = 1
 
-    async def async_step_user(self, user_input: dict | None = None) -> dict:
+    async def async_step_user(self, user_input: dict | None = None) -> dict[str, Any]:
         """Handle the initial step."""
-        errors = {}
+        errors: Dict[str, str] = {}
         if user_input is not None:
             try:
                 await self._validate_input(user_input)
@@ -95,11 +93,13 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def async_get_options_flow(config_entry):
         return MailcowOptionsFlowHandler()
 
-
 class MailcowOptionsFlowHandler(config_entries.OptionsFlow):
     """Handle options flow for Mailcow."""
 
-    async def async_step_init(self, user_input: dict | None = None) -> dict:
+    def __init__(self, config_entry):
+        self.config_entry = config_entry
+
+    async def async_step_init(self, user_input: dict | None = None) -> dict[str, Any]:
         """Manage the options."""
         if user_input is not None:
             options = {

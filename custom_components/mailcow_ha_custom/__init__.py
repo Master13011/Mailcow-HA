@@ -3,14 +3,12 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.config import ConfigType
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers import config_validation as cv
-import aiohttp
 
 from .const import DOMAIN, PLATFORMS, CONF_SCAN_INTERVAL, CONF_DISABLE_CHECK_AT_NIGHT, CONF_BASE_URL
 from .coordinator import MailcowCoordinator
 from .api import MailcowAPI
 
-CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
+CONFIG_SCHEMA = None  # Config validation handled in config flow
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -23,8 +21,17 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up Mailcow from a config entry."""
     _LOGGER.debug(f"Setting up Mailcow entry {entry.entry_id}")
-    session: aiohttp.ClientSession = async_get_clientsession(hass)
-    api = MailcowAPI(entry.data, session)
+    session = async_get_clientsession(hass)
+
+    # Convertir entry.data en dict car c'est un MappingProxyType par défaut
+    config_dict = dict(entry.data)
+
+    api = MailcowAPI(config_dict, session)
+
+    base_url = config_dict.get(CONF_BASE_URL)
+    if base_url is None:
+        _LOGGER.error(f"No base_url found in config entry {entry.entry_id}")
+        return False
 
     coordinator = MailcowCoordinator(
         hass,
@@ -32,7 +39,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         entry.options.get(CONF_SCAN_INTERVAL, 10),
         entry.options.get(CONF_DISABLE_CHECK_AT_NIGHT, False),
         entry.entry_id,
-        entry.data.get(CONF_BASE_URL),
+        base_url,
         session
     )
     await coordinator.async_config_entry_first_refresh()

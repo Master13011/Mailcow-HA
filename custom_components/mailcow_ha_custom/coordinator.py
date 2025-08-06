@@ -3,6 +3,7 @@ import pytz
 import logging
 from typing import Any
 import aiohttp
+from aiohttp import ClientTimeout
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 _LOGGER = logging.getLogger(__name__)
@@ -17,7 +18,16 @@ async def is_night_time(hass) -> bool:
     return hour >= 23 or hour < 5
 
 class MailcowCoordinator(DataUpdateCoordinator):
-    def __init__(self, hass, api, scan_interval: int, disable_check_at_night: bool, entry_id: str, base_url: str, session: aiohttp.ClientSession,):
+    def __init__(
+        self,
+        hass,
+        api,
+        scan_interval: int,
+        disable_check_at_night: bool,
+        entry_id: str,
+        base_url: str,
+        session: aiohttp.ClientSession,
+    ):
         super().__init__(
             hass,
             _LOGGER,
@@ -34,7 +44,8 @@ class MailcowCoordinator(DataUpdateCoordinator):
     async def _fetch_latest_github_version(self) -> str:
         github_url = "https://api.github.com/repos/mailcow/mailcow-dockerized/tags"
         try:
-            async with self._session.get(github_url, timeout=10) as response:
+            timeout = ClientTimeout(total=10)
+            async with self._session.get(github_url, timeout=timeout) as response:
                 if response.status == 200:
                     tags = await response.json()
                     if tags:
