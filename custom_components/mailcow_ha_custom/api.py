@@ -2,7 +2,7 @@
 import asyncio
 from aiohttp import ClientSession, ClientError
 from .const import CONF_API_KEY, CONF_BASE_URL
-from typing import Any, Optional, List, Dict
+from typing import Any, Optional, List, Dict, Union
 from .exceptions import (
     MailcowAPIError,
     MailcowAuthenticationError,
@@ -70,8 +70,8 @@ class MailcowAPI:
         result = await self._get("status/vmail")
         return result if isinstance(result, dict) else {}
 
-    async def get_status_containers(self) -> List[Any]:
-            result = await self._get("status/containers")
-            if isinstance(result, (list, dict)):
-                return result
-            return []
+    async def get_status_containers(self) -> Union[List[Any], Dict[Any, Any]]:
+        result = await self._get("status/containers")
+        if isinstance(result, (list, dict)):
+            return result
+        return []

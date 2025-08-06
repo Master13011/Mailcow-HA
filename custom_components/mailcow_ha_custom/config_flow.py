@@ -4,6 +4,7 @@ from homeassistant import config_entries
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.data_entry_flow import FlowResult
 
 from .const import (
     DOMAIN,
@@ -18,6 +19,8 @@ from .exceptions import (
     MailcowConnectionError,
     MailcowAPIError,
 )
+from typing import Dict
+
 _LOGGER = logging.getLogger(__name__)
 
 
@@ -30,13 +33,10 @@ class AuthenticationError(HomeAssistantError):
 
 
 class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
-    """Handle a config flow for Mailcow."""
-
     VERSION = 1
 
-    async def async_step_user(self, user_input: dict | None = None) -> dict:
-        """Handle the initial step."""
-        errors = {}
+    async def async_step_user(self, user_input: dict | None = None) -> FlowResult: # type: ignore[override]
+        errors: Dict[str, str] = {}
         if user_input is not None:
             try:
                 await self._validate_input(user_input)
@@ -63,7 +63,7 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
             vol.Required(CONF_BASE_URL): str,
             vol.Required(CONF_API_KEY): str,
             vol.Optional(CONF_DISABLE_CHECK_AT_NIGHT, default=False): bool,
-            vol.Optional(CONF_SCAN_INTERVAL, default=10): vol.All(int, vol.Range(min=1))
+            vol.Optional(CONF_SCAN_INTERVAL, default=10): vol.All(int, vol.Range(min=1)),
         })
 
         return self.async_show_form(
@@ -73,7 +73,6 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         )
 
     async def _validate_input(self, user_input: dict) -> None:
-        """Validate the user input against the Mailcow API."""
         session = async_get_clientsession(self.hass)
         api = MailcowAPI(user_input, session)
         try:
@@ -99,7 +98,7 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 class MailcowOptionsFlowHandler(config_entries.OptionsFlow):
     """Handle options flow for Mailcow."""
 
-    async def async_step_init(self, user_input: dict | None = None) -> dict:
+    async def async_step_init(self, user_input: dict | None = None) -> FlowResult: # type: ignore[override]
         """Manage the options."""
         if user_input is not None:
             options = {
