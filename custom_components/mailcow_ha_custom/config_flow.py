@@ -23,11 +23,14 @@ from typing import Dict
 
 _LOGGER = logging.getLogger(__name__)
 
+
 class CannotConnect(HomeAssistantError):
     """Error to indicate we cannot connect."""
 
+
 class AuthenticationError(HomeAssistantError):
     """Error to indicate authentication failure."""
+
 
 class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
@@ -89,7 +92,8 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     @staticmethod
     @callback
     def async_get_options_flow(config_entry):
-        return MailcowOptionsFlowHandler()
+        return MailcowOptionsFlowHandler(config_entry)
+
 
 class MailcowOptionsFlowHandler(config_entries.OptionsFlow):
     def __init__(self, config_entry):
