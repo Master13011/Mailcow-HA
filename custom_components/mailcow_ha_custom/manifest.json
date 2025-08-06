@@ -1,20 +1,14 @@
-{
-  "domain": "sncf_trains",
-  "name": "SNCF Trains",
-  "after_dependencies": [],
-  "codeowners": [
-    "@Master13011"
-  ],
+  {
+  "domain": "mailcow_ha_custom",
+  "name": "Mailcow HA Integration",
+  "after_dependencies": ["http"],
+  "codeowners": ["@Master13011"],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/Master13011/SNCF-API-HA",
+  "documentation": "https://github.com/Master13011/Mailcow-HA",
   "iot_class": "cloud_polling",
-  "issue_tracker": "https://github.com/Master13011/SNCF-API-HA/issues",
-  "loggers": [
-    "custom_components.sncf_trains"
-  ],
-  "requirements": [
-    "aiohttp"
-  ],
-  "version": "1.0.2"
-}
+  "issue_tracker": "https://github.com/Master13011/Mailcow-HA/issues",
+  "loggers": ["custom_components.mailcow_ha_custom"],
+  "requirements": ["aiohttp"],
+  "version": "1.0.0"
+  }
