@@ -34,6 +34,7 @@ class MailcowSensor(CoordinatorEntity, SensorEntity):
             "model": "API",
             "name": urlparse(self._base_url).netloc,
             "sw_version": self.coordinator.data.get("version", "unknown"),
+            "configuration_url": self._base_url
         }
 
 class MailcowDomainCountSensor(MailcowSensor):
@@ -112,3 +113,4 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         MailcowContainersStatusSensor(coordinator),
     ]
     async_add_entities(sensors, True)
+
