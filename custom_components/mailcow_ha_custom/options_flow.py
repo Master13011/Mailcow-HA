@@ -10,7 +10,8 @@ from .const import (
 
 
 class MailcowOptionsFlowHandler(OptionsFlow):
-    def __init__(self, config_entry: ConfigEntry):
+    def __init__(self, config_entry: ConfigEntry) -> None:
+        """Initialize options flow."""
         super().__init__()
 
     async def async_step_init(self, user_input: dict | None = None) -> FlowResult:
@@ -39,5 +40,6 @@ class MailcowOptionsFlowHandler(OptionsFlow):
             data_schema=data_schema,
 
         )
+
 
 
