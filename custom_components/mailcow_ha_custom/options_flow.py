@@ -1,5 +1,6 @@
 import voluptuous as vol
-from homeassistant.data_entry_flow import OptionsFlowWithConfigEntry, FlowResult
+from homeassistant.config_entries import OptionsFlowWithConfigEntry, ConfigEntry
+from homeassistant.data_entry_flow import FlowResult
 
 from .const import (
     CONF_API_KEY,
@@ -36,4 +37,5 @@ class MailcowOptionsFlowHandler(OptionsFlowWithConfigEntry):
         return self.async_show_form(
             step_id="init",
             data_schema=data_schema,
+
         )
