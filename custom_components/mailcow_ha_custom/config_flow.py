@@ -4,7 +4,7 @@ from homeassistant import config_entries
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.data_entry_flow import OptionsFlowWithConfigEntry, FlowResult
+from homeassistant.data_entry_flow import FlowResult
 
 from .const import (
     DOMAIN,

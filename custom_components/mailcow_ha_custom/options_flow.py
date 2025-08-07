@@ -1,17 +1,11 @@
-import logging
 import voluptuous as vol
-from homeassistant import config_entries
-from homeassistant.exceptions import HomeAssistantError
-from homeassistant.data_entry_flow import OptionsFlowWithConfigEntry
+from homeassistant.data_entry_flow import OptionsFlowWithConfigEntry, FlowResult
 
 from .const import (
-    DOMAIN,
     CONF_API_KEY,
-    CONF_BASE_URL,
     CONF_DISABLE_CHECK_AT_NIGHT,
     CONF_SCAN_INTERVAL,
 )
-from typing import Dict
 
 
 class MailcowOptionsFlowHandler(OptionsFlowWithConfigEntry):
