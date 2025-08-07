@@ -1,6 +1,5 @@
 import logging
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.config import ConfigType
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
@@ -58,4 +57,5 @@ async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     _LOGGER.debug(f"Reloading Mailcow entry {entry.entry_id}")
     await async_unload_entry(hass, entry)
     await async_setup_entry(hass, entry)
+
 
