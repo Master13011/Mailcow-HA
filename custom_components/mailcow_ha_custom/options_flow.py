@@ -1,5 +1,5 @@
 import voluptuous as vol
-from homeassistant.config_entries import OptionsFlowWithConfigEntry, ConfigEntry
+from homeassistant.config_entries import OptionsFlow, ConfigEntry
 from homeassistant.data_entry_flow import FlowResult
 
 from .const import (
@@ -9,9 +9,10 @@ from .const import (
 )
 
 
-class MailcowOptionsFlowHandler(OptionsFlowWithConfigEntry):
-    def __init__(self, config_entry):
-        super().__init__(config_entry)
+class MailcowOptionsFlowHandler(OptionsFlow):
+    def __init__(self, config_entry: ConfigEntry):
+        super().__init__()
+        self.config_entry = config_entry
 
     async def async_step_init(self, user_input: dict | None = None) -> FlowResult:
         if user_input is not None:
@@ -39,3 +40,4 @@ class MailcowOptionsFlowHandler(OptionsFlowWithConfigEntry):
             data_schema=data_schema,
 
         )
+
