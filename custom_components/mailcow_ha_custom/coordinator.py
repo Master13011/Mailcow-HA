@@ -1,4 +1,4 @@
-from datetime import timedelta, datetime
+from datetime import timedelta
 import logging
 from homeassistant.util import dt as dt_util
 from typing import Any
