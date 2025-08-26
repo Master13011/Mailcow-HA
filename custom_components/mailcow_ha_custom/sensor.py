@@ -2,7 +2,7 @@ import logging
 from urllib.parse import urlparse
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.components.sensor import SensorEntity, SensorStateClass
-from homeassistant.helpers.entity import DeviceEntryType
+from homeassistant.helpers.device_registry import DeviceEntryType
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
@@ -115,6 +115,7 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         MailcowContainersStatusSensor(coordinator),
     ]
     async_add_entities(sensors, True)
+
 
 
 
