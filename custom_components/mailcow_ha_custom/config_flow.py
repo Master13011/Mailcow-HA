@@ -94,6 +94,6 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     @callback
     def async_get_options_flow(config_entry: ConfigEntry):
         from .options_flow import MailcowOptionsFlowHandler
-        return MailcowOptionsFlowHandler(config_entry)
+        return MailcowOptionsFlowHandler()
 
 

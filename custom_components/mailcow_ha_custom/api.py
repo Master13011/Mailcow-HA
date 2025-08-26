@@ -1,6 +1,6 @@
 """API client for Mailcow."""
 import asyncio
-from aiohttp import ClientSession, ClientError
+from aiohttp import ClientSession, ClientError, ClientTimeout
 from .const import CONF_API_KEY, CONF_BASE_URL
 from typing import Any, Optional, List, Dict, Union
 from .exceptions import (
@@ -23,33 +23,40 @@ class MailcowAPI:
     async def _get(self, endpoint: str) -> Any:
         """Generic GET request to Mailcow API."""
         url = f"{self._base_url}/api/v1/get/{endpoint}"
-        headers = {"X-API-Key": self._api_key}
+        headers = {
+            "X-API-Key": self._api_key,
+            "Accept": "application/json",
+        }
+        timeout = ClientTimeout(total=15)
+
         try:
-            async with self._session.get(url, headers=headers) as response:
-                if response.status == 403:
+            async with self._session.get(url, headers=headers, timeout=timeout) as response:
+                if response.status in (401, 403):
                     _LOGGER.error("Authentication failed for endpoint %s", endpoint)
                     raise MailcowAuthenticationError("Invalid API key or permission denied")
                 elif response.status >= 500:
-                    _LOGGER.error("Server error from Mailcow API: %s", response.status)
+                    body = await response.text()
+                    _LOGGER.error("Server error %s from %s: %s", response.status, url, body)
                     raise MailcowAPIError(f"Server error {response.status}")
                 elif response.status >= 400:
-                    _LOGGER.error("Client error from Mailcow API: %s", response.status)
+                    body = await response.text()
+                    _LOGGER.error("Client error %s from %s: %s", response.status, url, body)
                     raise MailcowAPIError(f"Client error {response.status}")
-    
+
                 try:
                     return await response.json()
                 except Exception as e:
-                    _LOGGER.error("Failed to parse JSON response from %s: %s", url, e)
+                    _LOGGER.error("Failed to parse JSON from %s: %s", url, e)
                     raise MailcowAPIError("Invalid JSON response") from e
-                        
+
         except ClientError as err:
             _LOGGER.error("Connection error when calling %s: %s", url, err)
             raise MailcowConnectionError("Failed to connect to Mailcow API") from err
-    
+
         except asyncio.TimeoutError:
             _LOGGER.error("Timeout when connecting to %s", url)
             raise MailcowConnectionError("Connection timed out")
-    
+
         except Exception as ex:
             _LOGGER.exception("Unexpected error while calling Mailcow API: %s", ex)
             raise MailcowAPIError("Unexpected error occurred") from ex

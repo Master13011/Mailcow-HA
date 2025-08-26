@@ -2,7 +2,7 @@ import logging
 from urllib.parse import urlparse
 from homeassistant.components.update import UpdateEntity
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from homeassistant.helpers.entity import EntityCategory
+from homeassistant.helpers.entity import EntityCategory, DeviceEntryType
 
 from .const import DOMAIN
 
@@ -34,6 +34,7 @@ class MailcowUpdateEntity(CoordinatorEntity, UpdateEntity):
             "model": "API",
             "name": urlparse(self._base_url).netloc,
             "sw_version": self.installed_version or "unknown",
+            "entry_type": DeviceEntryType.SERVICE
         }
 
     @property

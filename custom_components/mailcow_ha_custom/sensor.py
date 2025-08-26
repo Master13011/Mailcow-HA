@@ -2,6 +2,7 @@ import logging
 from urllib.parse import urlparse
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 from homeassistant.components.sensor import SensorEntity, SensorStateClass
+from homeassistant.helpers.entity import DeviceEntryType
 from .const import DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
@@ -34,7 +35,8 @@ class MailcowSensor(CoordinatorEntity, SensorEntity):
             "model": "API",
             "name": urlparse(self._base_url).netloc,
             "sw_version": self.coordinator.data.get("version", "unknown"),
-            "configuration_url": self._base_url
+            "configuration_url": self._base_url,
+            "entry_type": DeviceEntryType.SERVICE
         }
 
 class MailcowDomainCountSensor(MailcowSensor):

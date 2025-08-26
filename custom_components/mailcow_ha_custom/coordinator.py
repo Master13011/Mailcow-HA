@@ -1,6 +1,6 @@
 from datetime import timedelta, datetime
-import pytz
 import logging
+from homeassistant.util import dt as dt_util
 from typing import Any
 import aiohttp
 from aiohttp import ClientTimeout
@@ -9,13 +9,9 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 _LOGGER = logging.getLogger(__name__)
 
 async def is_night_time(hass) -> bool:
-    """Retourne True si l'heure locale Home Assistant est entre 23h et 5h."""
-    tz_name = str(hass.config.time_zone)
-    # Exécuter pytz.timezone dans un thread séparé pour ne pas bloquer la boucle async
-    tz = await hass.async_add_executor_job(pytz.timezone, tz_name)
-    now = datetime.now(tz)
-    hour = now.hour
-    return hour >= 23 or hour < 5
+    tz = await dt_util.async_get_time_zone(str(hass.config.time_zone))
+    now = dt_util.now(tz)  # aware
+    return now.hour >= 23 or now.hour < 5
 
 class MailcowCoordinator(DataUpdateCoordinator):
     def __init__(
