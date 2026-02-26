@@ -4,11 +4,11 @@
       "user": {
         "title": "Connect to Mailcow",
         "data": {
-          "base_url": "Mailcow Base URL (EX. https://mail.domainmailcow.com)",
-          "api_key": "API Key"
+          "base_url": "Mailcow base URL",
+          "api_key": "API key"
         },
         "data_description": {
-          "base_url": "The base URL of your Mailcow installation",
+          "base_url": "Base URL of your Mailcow installation (example: mail.yourdomain.com)",
           "api_key": "The API key for your Mailcow installation"
         }
       }
@@ -16,6 +16,21 @@
     "error": {
       "cannot_connect": "Failed to connect, please check your URL and API key",
       "invalid_auth": "Invalid API key"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Mailcow options",
+        "data": {
+          "disable_check_at_night": "Disable checks at night",
+          "scan_interval": "Scan interval (minutes)"
+        },
+        "data_description": {
+          "disable_check_at_night": "Disable entity updates between 23:00 and 05:00",
+          "scan_interval": "How often Mailcow entities are updated (in minutes)"
+        }
+      }
     }
   }
 }
