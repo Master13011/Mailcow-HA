@@ -10,13 +10,10 @@
           "scan_interval": "Scan interval (in minutes)"
         },
         "data_description": {
-          "base_url": "The base URL of your Mailcow installation (example: {example_url})",
+          "base_url": "The base URL of your Mailcow installation (example: mail.domainmailcow.com)",
           "api_key": "The API key for your Mailcow installation",
           "disable_check_at_night": "Disable entity updates during the night (11:00 PM to 5:00 AM)",
           "scan_interval": "How often Mailcow entities are checked (in minutes)"
-        },
-        "description_placeholders": {
-          "example_url": "https://mail.domainmailcow.com"
         }
       }
     },
