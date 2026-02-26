@@ -1,11 +1,12 @@
 import logging
 import voluptuous as vol
+from typing import Dict
+
 from homeassistant import config_entries
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.data_entry_flow import FlowResult
+from homeassistant.config_entries import ConfigEntry, ConfigFlowResult
 
 from .const import (
     DOMAIN,
@@ -20,7 +21,6 @@ from .exceptions import (
     MailcowConnectionError,
     MailcowAPIError,
 )
-from typing import Dict
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -36,8 +36,9 @@ class AuthenticationError(HomeAssistantError):
 class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     VERSION = 1
 
-    async def async_step_user(self, user_input: dict | None = None) -> FlowResult:
+    async def async_step_user(self, user_input: dict | None = None) -> ConfigFlowResult:
         errors: Dict[str, str] = {}
+
         if user_input is not None:
             try:
                 await self._validate_input(user_input)
@@ -87,7 +88,7 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         except MailcowAPIError as err:
             raise CannotConnect from err
         except Exception as err:
-            _LOGGER.error(f"Unexpected error during API validation: {err}")
+            _LOGGER.error("Unexpected error during API validation: %s", err)
             raise CannotConnect from err
 
     @staticmethod
@@ -95,5 +96,3 @@ class MailcowConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     def async_get_options_flow(config_entry: ConfigEntry):
         from .options_flow import MailcowOptionsFlowHandler
         return MailcowOptionsFlowHandler()
-
-
