@@ -1,84 +1,117 @@
 """API client for Mailcow."""
-import asyncio
-from aiohttp import ClientSession, ClientError, ClientTimeout
+
+from __future__ import annotations
+
+import logging
+from typing import Any
+from urllib.parse import urlsplit, urlunsplit
+
+from aiohttp import ClientError, ClientSession, ClientSSLError, ClientTimeout
+
 from .const import CONF_API_KEY, CONF_BASE_URL
-from typing import Any, Optional, List, Dict, Union
 from .exceptions import (
     MailcowAPIError,
     MailcowAuthenticationError,
-    MailcowConnectionError
+    MailcowConnectionError,
+    MailcowInvalidURLError,
+    MailcowSSLError,
 )
-import logging
 
 _LOGGER = logging.getLogger(__name__)
+
+REQUEST_TIMEOUT = 15
+
+
+def normalize_base_url(raw: str) -> str:
+    """Return a clean base URL (scheme added if missing, no trailing slash).
+
+    Raises MailcowInvalidURLError if the value cannot be used.
+    """
+    value = (raw or "").strip()
+    if not value:
+        raise MailcowInvalidURLError("Empty URL")
+    if "://" not in value:
+        value = f"https://{value}"
+    parts = urlsplit(value)
+    if parts.scheme not in ("http", "https") or not parts.hostname:
+        raise MailcowInvalidURLError("Invalid URL")
+    try:
+        _ = parts.port  # raises ValueError for an invalid port
+    except ValueError as err:
+        raise MailcowInvalidURLError("Invalid port") from err
+    return urlunsplit((parts.scheme, parts.netloc, parts.path.rstrip("/"), "", ""))
+
 
 class MailcowAPI:
     """Asynchronous Mailcow API client."""
 
-    def __init__(self, config_data: dict, session: ClientSession):
-        self._base_url = config_data[CONF_BASE_URL].rstrip("/")
+    def __init__(self, config_data: dict[str, Any], session: ClientSession) -> None:
+        self._base_url = normalize_base_url(config_data[CONF_BASE_URL])
         self._api_key = config_data[CONF_API_KEY]
         self._session = session
 
+    @property
+    def base_url(self) -> str:
+        """Return the normalized base URL."""
+        return self._base_url
+
     async def _get(self, endpoint: str) -> Any:
-        """Generic GET request to Mailcow API."""
+        """Generic GET request to the Mailcow API."""
         url = f"{self._base_url}/api/v1/get/{endpoint}"
-        headers = {
-            "X-API-Key": self._api_key,
-            "Accept": "application/json",
-        }
-        timeout = ClientTimeout(total=15)
+        headers = {"X-API-Key": self._api_key, "Accept": "application/json"}
+        timeout = ClientTimeout(total=REQUEST_TIMEOUT)
 
         try:
-            async with self._session.get(url, headers=headers, timeout=timeout) as response:
-                if response.status in (401, 403):
-                    _LOGGER.error("Authentication failed for endpoint %s", endpoint)
-                    raise MailcowAuthenticationError("Invalid API key or permission denied")
-                elif response.status >= 500:
+            async with self._session.get(
+                url, headers=headers, timeout=timeout
+            ) as response:
+                status = response.status
+                if status in (401, 403):
+                    raise MailcowAuthenticationError(
+                        "Invalid API key or permission denied"
+                    )
+                if status >= 400:
                     body = await response.text()
-                    _LOGGER.error("Server error %s from %s: %s", response.status, url, body)
-                    raise MailcowAPIError(f"Server error {response.status}")
-                elif response.status >= 400:
-                    body = await response.text()
-                    _LOGGER.error("Client error %s from %s: %s", response.status, url, body)
-                    raise MailcowAPIError(f"Client error {response.status}")
-
+                    _LOGGER.debug("HTTP %s from %s: %.200s", status, url, body)
+                    raise MailcowAPIError(f"HTTP error {status}")
                 try:
-                    return await response.json()
-                except Exception as e:
-                    _LOGGER.error("Failed to parse JSON from %s: %s", url, e)
-                    raise MailcowAPIError("Invalid JSON response") from e
-
+                    data = await response.json(content_type=None)
+                except (ValueError, ClientError) as err:
+                    raise MailcowAPIError("Invalid JSON response") from err
+        except MailcowAPIError:
+            # Our own errors must not be swallowed by the handlers below.
+            raise
+        except TimeoutError as err:
+            raise MailcowConnectionError("Connection timed out") from err
+        except ClientSSLError as err:
+            raise MailcowSSLError("TLS certificate verification failed") from err
         except ClientError as err:
-            _LOGGER.error("Connection error when calling %s: %s", url, err)
             raise MailcowConnectionError("Failed to connect to Mailcow API") from err
 
-        except asyncio.TimeoutError:
-            _LOGGER.error("Timeout when connecting to %s", url)
-            raise MailcowConnectionError("Connection timed out")
+        # Some Mailcow versions answer HTTP 200 with an error payload.
+        if isinstance(data, dict) and data.get("type") == "error":
+            message = str(data.get("msg", "")).lower()
+            if "authentication" in message or "denied" in message:
+                raise MailcowAuthenticationError("Invalid API key or permission denied")
+            raise MailcowAPIError("Mailcow API returned an error")
+        return data
 
-        except Exception as ex:
-            _LOGGER.exception("Unexpected error while calling Mailcow API: %s", ex)
-            raise MailcowAPIError("Unexpected error occurred") from ex
-
-    async def get_mailbox_count(self) -> Optional[int]:
+    async def get_mailbox_count(self) -> int | None:
         data = await self._get("mailbox/all")
         return len(data) if isinstance(data, list) else None
 
-    async def get_domain_count(self) -> Optional[int]:
+    async def get_domain_count(self) -> int | None:
         data = await self._get("domain/all")
         return len(data) if isinstance(data, list) else None
 
-    async def get_status_version(self) -> Optional[str]:
+    async def get_status_version(self) -> str | None:
         data = await self._get("status/version")
         return data.get("version") if isinstance(data, dict) else None
 
-    async def get_status_vmail(self) -> Dict[str, Any]:
+    async def get_status_vmail(self) -> dict[str, Any]:
         result = await self._get("status/vmail")
         return result if isinstance(result, dict) else {}
 
-    async def get_status_containers(self) -> Union[List[Any], Dict[Any, Any]]:
+    async def get_status_containers(self) -> list[Any] | dict[Any, Any]:
         result = await self._get("status/containers")
-        if isinstance(result, (list, dict)):
-            return result
-        return []
+        return result if isinstance(result, (list, dict)) else []

@@ -3,19 +3,56 @@
     "step": {
       "user": {
         "title": "Connect to Mailcow",
+        "description": "Enable the API in the Mailcow admin interface (read-only access is enough) and paste the key here.",
         "data": {
-          "base_url": "Mailcow base URL",
+          "base_url": "Mailcow URL",
+          "api_key": "API key",
+          "verify_ssl": "Verify the TLS certificate",
+          "disable_check_at_night": "Disable checks at night",
+          "scan_interval": "Scan interval (minutes)"
+        },
+        "data_description": {
+          "base_url": "URL of your Mailcow installation (example: https://mail.example.com)",
+          "api_key": "The API key created in the Mailcow admin interface",
+          "verify_ssl": "Turn off only if your server uses a self-signed certificate",
+          "disable_check_at_night": "Pause the checks between 23:00 and 05:00 (Home Assistant local time)",
+          "scan_interval": "How often Mailcow is queried (in minutes)"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate Mailcow",
+        "description": "The API key for {base_url} is no longer valid. Enter a new one.",
+        "data": {
           "api_key": "API key"
         },
         "data_description": {
-          "base_url": "Base URL of your Mailcow installation (example: mail.yourdomain.com)",
-          "api_key": "The API key for your Mailcow installation"
+          "api_key": "The API key created in the Mailcow admin interface"
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigure Mailcow",
+        "description": "Update the API key or the TLS setting for {base_url}. To change the server URL, remove and add the integration again.",
+        "data": {
+          "api_key": "API key",
+          "verify_ssl": "Verify the TLS certificate"
+        },
+        "data_description": {
+          "api_key": "The API key created in the Mailcow admin interface",
+          "verify_ssl": "Turn off only if your server uses a self-signed certificate"
         }
       }
     },
     "error": {
-      "cannot_connect": "Failed to connect, please check your URL and API key",
-      "invalid_auth": "Invalid API key"
+      "cannot_connect": "Failed to connect, please check the URL",
+      "invalid_auth": "Invalid API key or insufficient permissions",
+      "invalid_url": "Invalid URL",
+      "ssl_error": "The TLS certificate could not be verified (disable verification for self-signed certificates)",
+      "unknown": "Unexpected error"
+    },
+    "abort": {
+      "already_configured": "This Mailcow server is already configured",
+      "reauth_successful": "Re-authentication was successful",
+      "reconfigure_successful": "Reconfiguration was successful"
     }
   },
   "options": {
@@ -27,9 +64,33 @@
           "scan_interval": "Scan interval (minutes)"
         },
         "data_description": {
-          "disable_check_at_night": "Disable entity updates between 23:00 and 05:00",
-          "scan_interval": "How often Mailcow entities are updated (in minutes)"
+          "disable_check_at_night": "Pause the checks between 23:00 and 05:00 (Home Assistant local time)",
+          "scan_interval": "How often Mailcow is queried (in minutes)"
         }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "version": {
+        "name": "Version"
+      },
+      "mailbox_count": {
+        "name": "Mailboxes"
+      },
+      "domain_count": {
+        "name": "Domains"
+      },
+      "vmail_status": {
+        "name": "Vmail usage"
+      },
+      "containers_status": {
+        "name": "Containers"
+      }
+    },
+    "update": {
+      "update": {
+        "name": "Update"
       }
     }
   }

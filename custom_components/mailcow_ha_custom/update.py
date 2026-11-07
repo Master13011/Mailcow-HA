@@ -1,62 +1,52 @@
-import logging
-from urllib.parse import urlparse
+"""Update entity for the Mailcow integration."""
+
+from __future__ import annotations
+
 from homeassistant.components.update import UpdateEntity
-from homeassistant.helpers.update_coordinator import CoordinatorEntity
-from homeassistant.helpers.entity import EntityCategory
-from homeassistant.helpers.device_registry import DeviceEntryType
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddConfigEntryEntitiesCallback
 
-from .const import DOMAIN
+from .const import GITHUB_RELEASES_PAGE
+from .coordinator import MailcowConfigEntry, MailcowCoordinator
+from .entity import MailcowEntity
+from .util import is_newer
 
-_LOGGER = logging.getLogger(__name__)
+PARALLEL_UPDATES = 0
 
-def sanitize_url(url: str) -> str:
-    return ''.join(filter(str.isalnum, url))
 
-class MailcowUpdateEntity(CoordinatorEntity, UpdateEntity):
-    """Representation of a Mailcow update entity."""
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: MailcowConfigEntry,
+    async_add_entities: AddConfigEntryEntitiesCallback,
+) -> None:
+    """Set up the Mailcow update entity."""
+    async_add_entities([MailcowUpdateEntity(entry.runtime_data)])
 
-    _attr_has_entity_name = True
-    _attr_entity_category = EntityCategory.CONFIG
 
-    def __init__(self, coordinator):
-        super().__init__(coordinator)
-        self._attr_name = "Mailcow Update"
-        self._attr_unique_id = (
-            f"mailcow_update_{sanitize_url(coordinator._base_url)}_{coordinator.entry_id}"
-        )
-        self._base_url = coordinator._base_url
-        self._entry_id = coordinator.entry_id
+class MailcowUpdateEntity(MailcowEntity, UpdateEntity):
+    """Tells whether a newer Mailcow version is available (informational)."""
 
-    @property
-    def device_info(self):
-        return {
-            "identifiers": {(DOMAIN, self._entry_id)},
-            "manufacturer": "Master13011",
-            "model": "API",
-            "name": urlparse(self._base_url).netloc,
-            "sw_version": self.installed_version or "unknown",
-            "entry_type": DeviceEntryType.SERVICE
-        }
+    _attr_translation_key = "update"
+    _attr_title = "Mailcow"
+
+    def __init__(self, coordinator: MailcowCoordinator) -> None:
+        super().__init__(coordinator, "update")
 
     @property
-    def installed_version(self):
-        return self.coordinator.data.get("version")
+    def installed_version(self) -> str | None:
+        return (self.coordinator.data or {}).get("version")
 
     @property
-    def latest_version(self):
-        return self.coordinator.data.get("latest_version")
+    def latest_version(self) -> str | None:
+        return (self.coordinator.data or {}).get("latest_version")
 
     @property
-    def release_url(self):
+    def release_url(self) -> str:
         latest = self.latest_version
-        if latest and latest != "unknown":
-            return f"https://github.com/mailcow/mailcow-dockerized/releases/tag/{latest}"
-        return "https://github.com/mailcow/mailcow-dockerized/releases"
+        if latest:
+            return f"{GITHUB_RELEASES_PAGE}/tag/{latest}"
+        return GITHUB_RELEASES_PAGE
 
-    @property
-    def title(self):
-        return "Mailcow"
-
-async def async_setup_entry(hass, config_entry, async_add_entities):
-    coordinator = hass.data[DOMAIN][config_entry.entry_id]
-    async_add_entities([MailcowUpdateEntity(coordinator)], True)
+    def version_is_newer(self, latest_version: str, installed_version: str) -> bool:
+        """Compare Mailcow date-based versions (e.g. 2025-03a)."""
+        return is_newer(latest_version, installed_version)

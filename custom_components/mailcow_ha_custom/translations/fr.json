@@ -3,23 +3,56 @@
     "step": {
       "user": {
         "title": "Connexion à Mailcow",
+        "description": "Activez l'API dans l'interface d'administration de Mailcow (un accès en lecture seule suffit) puis collez la clé ici.",
         "data": {
-          "base_url": "URL de base de Mailcow",
+          "base_url": "URL de Mailcow",
           "api_key": "Clé API",
+          "verify_ssl": "Vérifier le certificat TLS",
           "disable_check_at_night": "Désactiver la vérification la nuit",
-          "scan_interval": "Intervalle de scan (en minutes)"
+          "scan_interval": "Intervalle de scan (minutes)"
         },
         "data_description": {
-          "base_url": "URL de base de votre installation Mailcow (exemple : mail.mondomaine.fr)",
-          "api_key": "Clé API de votre installation Mailcow",
-          "disable_check_at_night": "Désactive la vérification des entités entre 23h00 et 5h00",
-          "scan_interval": "Fréquence de mise à jour des entités Mailcow (en minutes)"
+          "base_url": "URL de votre installation Mailcow (exemple : https://mail.mondomaine.fr)",
+          "api_key": "La clé API créée dans l'interface d'administration de Mailcow",
+          "verify_ssl": "À désactiver uniquement si votre serveur utilise un certificat auto-signé",
+          "disable_check_at_night": "Met en pause les vérifications entre 23h00 et 5h00 (heure locale de Home Assistant)",
+          "scan_interval": "Fréquence d'interrogation de Mailcow (en minutes)"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Réauthentifier Mailcow",
+        "description": "La clé API de {base_url} n'est plus valide. Saisissez-en une nouvelle.",
+        "data": {
+          "api_key": "Clé API"
+        },
+        "data_description": {
+          "api_key": "La clé API créée dans l'interface d'administration de Mailcow"
+        }
+      },
+      "reconfigure": {
+        "title": "Reconfigurer Mailcow",
+        "description": "Modifiez la clé API ou le réglage TLS pour {base_url}. Pour changer l'URL du serveur, supprimez puis ajoutez de nouveau l'intégration.",
+        "data": {
+          "api_key": "Clé API",
+          "verify_ssl": "Vérifier le certificat TLS"
+        },
+        "data_description": {
+          "api_key": "La clé API créée dans l'interface d'administration de Mailcow",
+          "verify_ssl": "À désactiver uniquement si votre serveur utilise un certificat auto-signé"
         }
       }
     },
     "error": {
-      "cannot_connect": "Impossible de se connecter, vérifiez l'URL et la clé API",
-      "invalid_auth": "Clé API invalide"
+      "cannot_connect": "Impossible de se connecter, vérifiez l'URL",
+      "invalid_auth": "Clé API invalide ou droits insuffisants",
+      "invalid_url": "URL invalide",
+      "ssl_error": "Le certificat TLS n'a pas pu être vérifié (désactivez la vérification pour un certificat auto-signé)",
+      "unknown": "Erreur inattendue"
+    },
+    "abort": {
+      "already_configured": "Ce serveur Mailcow est déjà configuré",
+      "reauth_successful": "Réauthentification réussie",
+      "reconfigure_successful": "Reconfiguration réussie"
     }
   },
   "options": {
@@ -28,12 +61,36 @@
         "title": "Options Mailcow",
         "data": {
           "disable_check_at_night": "Désactiver la vérification la nuit",
-          "scan_interval": "Intervalle de scan (en minutes)"
+          "scan_interval": "Intervalle de scan (minutes)"
         },
         "data_description": {
-          "disable_check_at_night": "Désactive la vérification des entités entre 23h00 et 5h00",
-          "scan_interval": "Fréquence de mise à jour des entités Mailcow (en minutes)"
+          "disable_check_at_night": "Met en pause les vérifications entre 23h00 et 5h00 (heure locale de Home Assistant)",
+          "scan_interval": "Fréquence d'interrogation de Mailcow (en minutes)"
         }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "version": {
+        "name": "Version"
+      },
+      "mailbox_count": {
+        "name": "Boîtes aux lettres"
+      },
+      "domain_count": {
+        "name": "Domaines"
+      },
+      "vmail_status": {
+        "name": "Utilisation Vmail"
+      },
+      "containers_status": {
+        "name": "Conteneurs"
+      }
+    },
+    "update": {
+      "update": {
+        "name": "Mise à jour"
       }
     }
   }

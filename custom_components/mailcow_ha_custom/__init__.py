@@ -1,75 +1,97 @@
+"""The Mailcow integration."""
+
+from __future__ import annotations
+
 import logging
-from homeassistant.config_entries import ConfigEntry
+
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import ConfigEntryAuthFailed, ConfigEntryError
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 
-from .const import DOMAIN, PLATFORMS, CONF_SCAN_INTERVAL, CONF_DISABLE_CHECK_AT_NIGHT, CONF_BASE_URL, CONF_API_KEY
-from .coordinator import MailcowCoordinator
-from .api import MailcowAPI
+from .api import MailcowAPI, normalize_base_url
+from .const import (
+    CONF_API_KEY,
+    CONF_BASE_URL,
+    CONF_VERIFY_SSL,
+    DEFAULT_VERIFY_SSL,
+    DOMAIN,
+    PLATFORMS,
+)
+from .coordinator import MailcowConfigEntry, MailcowCoordinator
+from .exceptions import MailcowInvalidURLError
 
 _LOGGER = logging.getLogger(__name__)
 
 
-async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
+async def async_setup_entry(hass: HomeAssistant, entry: MailcowConfigEntry) -> bool:
     """Set up Mailcow from a config entry."""
-    _LOGGER.debug(f"Setting up Mailcow entry {entry.entry_id}")
-    session = async_get_clientsession(hass)
+    api_key = entry.data.get(CONF_API_KEY)
+    if not api_key:
+        raise ConfigEntryAuthFailed("Missing API key")
 
-    base_url = entry.data.get(CONF_BASE_URL)
-    api_key = entry.options.get(CONF_API_KEY) or entry.data.get(CONF_API_KEY)
+    verify_ssl = entry.data.get(CONF_VERIFY_SSL, DEFAULT_VERIFY_SSL)
+    try:
+        api = MailcowAPI(
+            {CONF_BASE_URL: entry.data[CONF_BASE_URL], CONF_API_KEY: api_key},
+            async_get_clientsession(hass, verify_ssl=verify_ssl),
+        )
+    except MailcowInvalidURLError as err:
+        raise ConfigEntryError("Invalid Mailcow URL") from err
 
-    if base_url is None or api_key is None:
-        _LOGGER.error("Missing base_url or api_key in config entry")
-        return False
-
-    api = MailcowAPI({"base_url": base_url, "api_key": api_key}, session)
-
-    coordinator = MailcowCoordinator(
-        hass,
-        api,
-        entry.options.get(CONF_SCAN_INTERVAL, 10),
-        entry.options.get(CONF_DISABLE_CHECK_AT_NIGHT, False),
-        entry.entry_id,
-        base_url,
-        session
-    )
+    # GitHub is always queried with a verified TLS session.
+    coordinator = MailcowCoordinator(hass, entry, api, async_get_clientsession(hass))
     await coordinator.async_config_entry_first_refresh()
 
-    hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN][entry.entry_id] = coordinator
-
+    entry.runtime_data = coordinator
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
-    _LOGGER.info(f"Mailcow entry {entry.entry_id} set up successfully")
     return True
 
 
-async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    _LOGGER.debug(f"Unloading Mailcow entry {entry.entry_id}")
-    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
-    if unload_ok:
-        hass.data[DOMAIN].pop(entry.entry_id, None)
-        _LOGGER.info(f"Mailcow entry {entry.entry_id} unloaded successfully")
-    return unload_ok
+async def async_unload_entry(hass: HomeAssistant, entry: MailcowConfigEntry) -> bool:
+    """Unload a config entry."""
+    return await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
 
-async def async_reload_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
-    _LOGGER.debug(f"Reloading Mailcow entry {entry.entry_id}")
-    await async_unload_entry(hass, entry)
-    await async_setup_entry(hass, entry)
+async def async_migrate_entry(hass: HomeAssistant, entry: MailcowConfigEntry) -> bool:
+    """Migrate old config entries.
 
+    Version 1 -> 2:
+    - the API key moves back to `data` (needed for reauthentication);
+    - `verify_ssl` is added (defaults to True, as before);
+    - the base URL is normalized and used as the entry unique ID.
+    """
+    if entry.version > 2:
+        return False
 
-async def async_migrate_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    """Migrate old config entries to move API key to options."""
-    data = dict(entry.data)
-    options = dict(entry.options)
-    updated = False
+    if entry.version == 1:
+        data = dict(entry.data)
+        options = dict(entry.options)
 
-    if CONF_API_KEY in data:
-        options.setdefault(CONF_API_KEY, data.pop(CONF_API_KEY))
-        updated = True
+        api_key = options.pop(CONF_API_KEY, None) or data.get(CONF_API_KEY)
+        if api_key:
+            data[CONF_API_KEY] = api_key
+        data.setdefault(CONF_VERIFY_SSL, DEFAULT_VERIFY_SSL)
 
-    if updated:
-        hass.config_entries.async_update_entry(entry, data=data, options=options)
-        _LOGGER.info("Migrated Mailcow config entry to move api_key to options.")
+        unique_id = entry.unique_id
+        base_url = data.get(CONF_BASE_URL)
+        if base_url:
+            try:
+                data[CONF_BASE_URL] = normalize_base_url(base_url)
+            except MailcowInvalidURLError:
+                _LOGGER.warning("Stored Mailcow URL is invalid: %s", base_url)
+            else:
+                candidate = data[CONF_BASE_URL].lower()
+                taken = any(
+                    other.unique_id == candidate
+                    for other in hass.config_entries.async_entries(DOMAIN)
+                    if other.entry_id != entry.entry_id
+                )
+                if unique_id is None and not taken:
+                    unique_id = candidate
+
+        hass.config_entries.async_update_entry(
+            entry, data=data, options=options, unique_id=unique_id, version=2
+        )
+        _LOGGER.info("Migrated Mailcow config entry to version 2")
 
     return True
