@@ -12,7 +12,7 @@
           "scan_interval": "Intervalle de scan (minutes)"
         },
         "data_description": {
-          "base_url": "URL de votre installation Mailcow (exemple : https://mail.mondomaine.fr)",
+          "base_url": "Adresse de votre installation Mailcow (exemple : mail.mondomaine.fr)",
           "api_key": "La clé API créée dans l'interface d'administration de Mailcow",
           "verify_ssl": "À désactiver uniquement si votre serveur utilise un certificat auto-signé",
           "disable_check_at_night": "Met en pause les vérifications entre 23h00 et 5h00 (heure locale de Home Assistant)",

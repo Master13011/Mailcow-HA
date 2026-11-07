@@ -12,7 +12,7 @@
           "scan_interval": "Scan interval (minutes)"
         },
         "data_description": {
-          "base_url": "URL of your Mailcow installation (example: https://mail.example.com)",
+          "base_url": "Address of your Mailcow installation (example: mail.example.com)",
           "api_key": "The API key created in the Mailcow admin interface",
           "verify_ssl": "Turn off only if your server uses a self-signed certificate",
           "disable_check_at_night": "Pause the checks between 23:00 and 05:00 (Home Assistant local time)",
