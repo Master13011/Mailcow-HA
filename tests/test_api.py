@@ -1,6 +1,7 @@
 """Tests for the Mailcow API client (no network, fake session)."""
 
 import asyncio
+from unittest.mock import MagicMock
 
 import pytest
 from aiohttp import ClientError, ClientSSLError
@@ -114,7 +115,7 @@ def test_timeout_and_connection_errors():
 
 
 def test_ssl_error():
-    api, _ = make_api(error=ClientSSLError())
+    api, _ = make_api(error=ClientSSLError(MagicMock(), OSError("ssl")))
     with pytest.raises(MailcowSSLError):
         run(api.get_status_version())
 

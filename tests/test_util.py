@@ -55,8 +55,8 @@ def test_containers_state():
     assert containers_state(bad) == "Issues Detected"
     assert containers_state([{"state": "running"}]) == "All Running"
     assert containers_state({}) == "No Data"
-    assert containers_state({"a": "x"}) == "Unknown"
-    assert containers_state(None) == "Unknown"
+    assert containers_state({"a": "x"}) == "N/A"
+    assert containers_state(None) == "N/A"
 
 
 def test_containers_attributes():
