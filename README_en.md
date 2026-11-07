@@ -11,7 +11,9 @@ This custom integration allows you to connect your Mailcow server to Home Assist
 - **Vmail Service Status**: Monitors disk usage for the virtual mail service (Vmail).  
 - **Container Status**: Provides an overview of the status of all Docker containers associated with Mailcow.
 - **Enable or disable entity verification** : Allows enabling or disabling entity verification, between 11:00 PM and 5:00 AM.
-- **Change API check interval**: Customize the time interval between each API check, to optimize performance according to your needs (Minutes).
+- **Change API check interval**: Customize the time interval between each - **API check**, to optimize performance according to your needs (Minutes).
+- **TLS certificate**: verification can be turned off for self-signed certificates.
+Reauthentication / reconfiguration: if the API key is revoked, Home Assistant asks for a new one.
 
 ## Installation
 
@@ -51,3 +53,10 @@ Endpoints used:
 GET /api/v1/get/status/containers  
 GET /api/v1/get/status/vmail  
 GET /api/v1/get/status/version
+```
+
+## Usage
+Once set up, the integration adds sensors and an update entity grouped under one "Mailcow (your-domain)" device.
+
+## Contributing
+Contributions are welcome: pull requests or issues. Run the tests with `pytest`.

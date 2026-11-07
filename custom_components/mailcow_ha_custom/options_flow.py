@@ -1,35 +1,57 @@
-import voluptuous as vol
+"""Options flow for the Mailcow integration."""
+
+from __future__ import annotations
+
 from typing import Any
 
-from homeassistant.config_entries import OptionsFlowWithReload, ConfigFlowResult
+import voluptuous as vol
 
-from .const import (
-    CONF_API_KEY,
-    CONF_DISABLE_CHECK_AT_NIGHT,
-    CONF_SCAN_INTERVAL,
+from homeassistant.config_entries import ConfigFlowResult, OptionsFlowWithReload
+from homeassistant.helpers.selector import (
+    NumberSelector,
+    NumberSelectorConfig,
+    NumberSelectorMode,
 )
 
-OPTIONS_SCHEMA = vol.Schema({
-    vol.Required(CONF_API_KEY): str,
-    vol.Optional(CONF_DISABLE_CHECK_AT_NIGHT, default=False): bool,
-    vol.Optional(CONF_SCAN_INTERVAL, default=10): vol.All(int, vol.Range(min=1)),
-})
+from .const import CONF_DISABLE_CHECK_AT_NIGHT, CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
+
+OPTIONS_SCHEMA = vol.Schema(
+    {
+        vol.Optional(CONF_DISABLE_CHECK_AT_NIGHT, default=False): bool,
+        vol.Optional(CONF_SCAN_INTERVAL, default=DEFAULT_SCAN_INTERVAL): NumberSelector(
+            NumberSelectorConfig(
+                min=1,
+                max=1440,
+                step=1,
+                mode=NumberSelectorMode.BOX,
+                unit_of_measurement="min",
+            )
+        ),
+    }
+)
 
 
 class MailcowOptionsFlowHandler(OptionsFlowWithReload):
-    def __init__(self) -> None:
-        super().__init__()
+    """Handle Mailcow options (the integration reloads automatically)."""
 
-    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
         if user_input is not None:
-            return self.async_create_entry(title="", data=user_input)
-
-        data_schema = self.add_suggested_values_to_schema(
-            OPTIONS_SCHEMA,
-            self.config_entry.options,
-        )
+            return self.async_create_entry(
+                data={
+                    CONF_DISABLE_CHECK_AT_NIGHT: bool(
+                        user_input.get(CONF_DISABLE_CHECK_AT_NIGHT, False)
+                    ),
+                    CONF_SCAN_INTERVAL: int(
+                        user_input.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
+                    ),
+                }
+            )
 
         return self.async_show_form(
             step_id="init",
-            data_schema=data_schema,
+            data_schema=self.add_suggested_values_to_schema(
+                OPTIONS_SCHEMA, self.config_entry.options
+            ),
         )
