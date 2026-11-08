@@ -46,9 +46,13 @@ class MailcowCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         api: MailcowAPI,
         github_session: ClientSession,
     ) -> None:
-        scan_interval = config_entry.options.get(
-            CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL
-        )
+        try:
+            scan_interval = max(
+                1, int(config_entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL))
+            )
+        except (TypeError, ValueError):
+            # An invalid stored value must never become a 0-minute interval
+            scan_interval = DEFAULT_SCAN_INTERVAL
         super().__init__(
             hass,
             _LOGGER,
