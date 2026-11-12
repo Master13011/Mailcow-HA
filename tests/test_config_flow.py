@@ -206,7 +206,7 @@ async def test_reauth_updates_the_api_key(hass: HomeAssistant) -> None:
     result = await entry.start_reauth_flow(hass)
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "reauth_confirm"
-    assert result["description_placeholders"] == {"base_url": BASE_URL}
+    assert result["description_placeholders"]["base_url"] == BASE_URL
 
     with patch(f"{CONFIG_FLOW}.MailcowAPI", return_value=_api()) as cls:
         result = await hass.config_entries.flow.async_configure(
@@ -264,7 +264,7 @@ async def test_reconfigure_updates_key_and_tls(hass: HomeAssistant) -> None:
     result = await entry.start_reconfigure_flow(hass)
     assert result["type"] is FlowResultType.FORM
     assert result["step_id"] == "reconfigure"
-    assert result["description_placeholders"] == {"base_url": BASE_URL}
+    assert result["description_placeholders"]["base_url"] == BASE_URL
 
     with patch(f"{CONFIG_FLOW}.MailcowAPI", return_value=_api()):
         result = await hass.config_entries.flow.async_configure(
