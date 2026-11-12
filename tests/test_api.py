@@ -1,6 +1,5 @@
 """Tests for the Mailcow API client (no network, fake session)."""
 
-import asyncio
 from unittest.mock import MagicMock
 
 import pytest
@@ -67,74 +66,70 @@ def make_api(response=None, error=None):
     return api, session
 
 
-def run(coro):
-    return asyncio.run(coro)
-
-
 @pytest.mark.parametrize("status", [401, 403])
-def test_auth_errors_are_preserved(status):
+async def test_auth_errors_are_preserved(status):
     api, _ = make_api(FakeResponse(status))
     with pytest.raises(MailcowAuthenticationError):
-        run(api.get_status_version())
+        await api.get_status_version()
 
 
 @pytest.mark.parametrize("status", [404, 500, 503])
-def test_http_errors_are_api_errors(status):
+async def test_http_errors_are_api_errors(status):
     api, _ = make_api(FakeResponse(status))
     with pytest.raises(MailcowAPIError) as err:
-        run(api.get_status_version())
+        await api.get_status_version()
     assert not isinstance(err.value, (MailcowAuthenticationError, MailcowConnectionError))
     assert str(status) in str(err.value)
 
 
-def test_invalid_json():
+async def test_invalid_json():
     api, _ = make_api(FakeResponse(200, json_error=True))
     with pytest.raises(MailcowAPIError):
-        run(api.get_status_version())
+        await api.get_status_version()
 
 
-def test_error_payload_with_auth_message():
+async def test_error_payload_with_auth_message():
     api, _ = make_api(FakeResponse(200, {"type": "error", "msg": "authentication failed"}))
     with pytest.raises(MailcowAuthenticationError):
-        run(api.get_status_version())
+        await api.get_status_version()
 
 
-def test_error_payload_generic():
+async def test_error_payload_generic():
     api, _ = make_api(FakeResponse(200, {"type": "error", "msg": "boom"}))
     with pytest.raises(MailcowAPIError):
-        run(api.get_status_version())
+        await api.get_status_version()
 
 
-def test_timeout_and_connection_errors():
+async def test_timeout_and_connection_errors():
     api, _ = make_api(error=TimeoutError())
     with pytest.raises(MailcowConnectionError):
-        run(api.get_status_version())
+        await api.get_status_version()
     api, _ = make_api(error=ClientError())
     with pytest.raises(MailcowConnectionError):
-        run(api.get_status_version())
+        await api.get_status_version()
 
 
-def test_ssl_error():
+async def test_ssl_error():
     api, _ = make_api(error=ClientSSLError(MagicMock(), OSError("ssl")))
     with pytest.raises(MailcowSSLError):
-        run(api.get_status_version())
+        await api.get_status_version()
 
 
-def test_success_and_url_building():
+async def test_success_and_url_building():
     api, session = make_api(FakeResponse(200, {"version": "2025-03a"}))
-    assert run(api.get_status_version()) == "2025-03a"
+    assert await api.get_status_version() == "2025-03a"
     url, kwargs = session.calls[0]
     assert url == "https://mail.example.com/api/v1/get/status/version"
     assert kwargs["headers"]["X-API-Key"] == "k"
 
 
-def test_counts_and_shapes():
+async def test_counts_and_shapes():
     api, _ = make_api(FakeResponse(200, [1, 2, 3]))
-    assert run(api.get_mailbox_count()) == 3
+    assert await api.get_mailbox_count() == 3
     api, _ = make_api(FakeResponse(200, {}))
-    assert run(api.get_domain_count()) is None
+    assert await api.get_domain_count() is None
     api, _ = make_api(FakeResponse(200, "x"))
-    assert run(api.get_status_containers()) == []
+    assert await api.get_status_containers() == []
 
 
 @pytest.mark.parametrize(
@@ -155,3 +150,84 @@ def test_normalize_base_url(raw, expected):
 def test_normalize_base_url_invalid(raw):
     with pytest.raises(MailcowInvalidURLError):
         normalize_base_url(raw)
+
+
+# --- additional API tests --------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    ("method", "endpoint"),
+    [
+        ("get_status_version", "status/version"),
+        ("get_mailbox_count", "mailbox/all"),
+        ("get_domain_count", "domain/all"),
+        ("get_status_vmail", "status/vmail"),
+        ("get_status_containers", "status/containers"),
+    ],
+)
+async def test_each_method_calls_its_endpoint(method, endpoint):
+    api, session = make_api(FakeResponse(200, {}))
+    await getattr(api, method)()
+    assert len(session.calls) == 1
+    assert session.calls[0][0] == f"https://mail.example.com/api/v1/get/{endpoint}"
+
+
+async def test_request_headers_and_timeout():
+    api, session = make_api(FakeResponse(200, {"version": "2025-03"}))
+    await api.get_status_version()
+    _, kwargs = session.calls[0]
+    assert kwargs["headers"] == {"X-API-Key": "k", "Accept": "application/json"}
+    assert kwargs["timeout"].total == 15
+
+
+def test_base_url_property_is_normalized():
+    api, _ = make_api()
+    assert api.base_url == "https://mail.example.com"
+
+
+def test_invalid_url_is_refused_at_construction():
+    with pytest.raises(MailcowInvalidURLError):
+        MailcowAPI({"base_url": "ftp://example.com", "api_key": "k"}, FakeSession())
+
+
+async def test_error_payload_with_denied_message():
+    api, _ = make_api(FakeResponse(200, {"type": "error", "msg": "Access DENIED"}))
+    with pytest.raises(MailcowAuthenticationError):
+        await api.get_status_version()
+
+
+async def test_error_payload_without_message():
+    api, _ = make_api(FakeResponse(200, {"type": "error"}))
+    with pytest.raises(MailcowAPIError) as err:
+        await api.get_status_version()
+    assert not isinstance(err.value, MailcowAuthenticationError)
+
+
+async def test_version_shapes():
+    api, _ = make_api(FakeResponse(200, ["2025-03"]))
+    assert await api.get_status_version() is None
+    api, _ = make_api(FakeResponse(200, {"other": 1}))
+    assert await api.get_status_version() is None
+
+
+async def test_counts_for_an_empty_list():
+    api, _ = make_api(FakeResponse(200, []))
+    assert await api.get_mailbox_count() == 0
+    assert await api.get_domain_count() == 0
+
+
+async def test_vmail_shapes():
+    status = {"used_percent": "55%", "disk": "/dev/sda1"}
+    api, _ = make_api(FakeResponse(200, status))
+    assert await api.get_status_vmail() == status
+    api, _ = make_api(FakeResponse(200, ["x"]))
+    assert await api.get_status_vmail() == {}
+
+
+async def test_containers_shapes_are_returned_unchanged():
+    as_dict = {"nginx": {"state": "running"}}
+    as_list = [{"container": "nginx", "state": "running"}]
+    api, _ = make_api(FakeResponse(200, as_dict))
+    assert await api.get_status_containers() == as_dict
+    api, _ = make_api(FakeResponse(200, as_list))
+    assert await api.get_status_containers() == as_list
